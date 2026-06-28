@@ -25,6 +25,7 @@ interface Props {
   evidenceItems: EvidenceItem[];
   onItemAcknowledged: (item: AlternativeReviewItem) => void;
   onAdvance: () => Promise<void>;
+  isEditMode?: boolean;
 }
 
 const TYPE_LABELS: Record<string, { title: string; description: string }> = {

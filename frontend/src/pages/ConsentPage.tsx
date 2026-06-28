@@ -8,13 +8,11 @@
  */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 import api from "../api/client";
 import type { User } from "../api/types";
 import { Button, Card, ErrorMessage, extractErrorMessage } from "../components/ui";
 
 export default function ConsentPage() {
-    const { user, login } = useAuth();
     const navigate = useNavigate();
     const [agreed, setAgreed] = useState(false);
     const [submitting, setSubmitting] = useState(false);

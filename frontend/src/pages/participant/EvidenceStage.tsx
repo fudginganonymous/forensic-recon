@@ -21,6 +21,7 @@ interface Props {
   evidenceLinks: EvidenceLink[];
   onLinkChanged: (link: EvidenceLink) => void;
   onAdvance: () => Promise<void>;
+  isEditMode?: boolean;
 }
 
 const STANCE_OPTIONS: { value: Stance; label: string; color: string }[] = [
