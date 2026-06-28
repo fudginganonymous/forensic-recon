@@ -25,7 +25,13 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       const user = await login(username, password);
-      navigate(user.role === "researcher" ? "/researcher" : "/participant");
+      if (user.role === "researcher") {
+        navigate("/researcher");
+      } else if (!user.has_consented) {
+        navigate("/consent");
+      } else {
+        navigate("/participant");
+      }
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {

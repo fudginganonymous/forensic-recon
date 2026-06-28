@@ -41,7 +41,8 @@ router = APIRouter(prefix="/researcher", tags=["Researcher Dashboard"])
 @router.get("/sessions", response_model=List[SessionOut])
 def list_all_sessions(
     case_id: Optional[int] = Query(None, description="Filter by case ID"),
-    participant_id: Optional[int] = Query(None, description="Filter by participant ID"),
+    participant_id: Optional[int] = Query(
+        None, description="Filter by participant ID"),
     researcher: User = Depends(require_researcher),
     db: DBSession = Depends(get_db),
 ):
@@ -49,13 +50,15 @@ def list_all_sessions(
     if case_id is not None:
         query = query.filter(ReconstructionSession.case_id == case_id)
     if participant_id is not None:
-        query = query.filter(ReconstructionSession.participant_id == participant_id)
+        query = query.filter(
+            ReconstructionSession.participant_id == participant_id)
     return query.order_by(ReconstructionSession.started_at.desc()).all()
 
 
 @router.get("/sessions/{session_id}", response_model=SessionDetailOut)
 def get_session_full(session_id: int, researcher: User = Depends(require_researcher), db: DBSession = Depends(get_db)):
-    session = db.query(ReconstructionSession).filter(ReconstructionSession.id == session_id).first()
+    session = db.query(ReconstructionSession).filter(
+        ReconstructionSession.id == session_id).first()
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     return session
@@ -73,7 +76,7 @@ def list_participants(researcher: User = Depends(require_researcher), db: DBSess
             "is_active": p.is_active,
             "created_at": p.created_at,
             "num_sessions": len(p.sessions),
-            "num_completed_sessions": sum(1 for s in p.sessions if s.current_stage == 6),
+            "num_completed_sessions": sum(1 for s in p.sessions if s.current_stage == 7),
         })
     return result
 
@@ -84,7 +87,8 @@ def list_participants(researcher: User = Depends(require_researcher), db: DBSess
 
 @router.get("/sessions/{session_id}/metrics", response_model=SessionMetricsOut)
 def get_session_metrics(session_id: int, recompute: bool = Query(False), researcher: User = Depends(require_researcher), db: DBSession = Depends(get_db)):
-    session = db.query(ReconstructionSession).filter(ReconstructionSession.id == session_id).first()
+    session = db.query(ReconstructionSession).filter(
+        ReconstructionSession.id == session_id).first()
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
@@ -100,7 +104,8 @@ def get_session_metrics(session_id: int, recompute: bool = Query(False), researc
 
 @router.get("/sessions/{session_id}/activity-log")
 def get_activity_log(session_id: int, researcher: User = Depends(require_researcher), db: DBSession = Depends(get_db)):
-    session = db.query(ReconstructionSession).filter(ReconstructionSession.id == session_id).first()
+    session = db.query(ReconstructionSession).filter(
+        ReconstructionSession.id == session_id).first()
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
@@ -148,7 +153,7 @@ def _build_metrics_dataframe(db: DBSession, case_id: Optional[int] = None) -> pd
             "case_title": session.case.title,
             "bayesian_enabled": session.bayesian_enabled_snapshot,
             "current_stage": session.current_stage,
-            "completed": session.current_stage == 6,
+            "completed": session.current_stage == 7,
             "started_at": session.started_at,
             "completed_at": session.completed_at,
         }
@@ -188,7 +193,8 @@ def export_metrics_excel(case_id: Optional[int] = Query(None), researcher: User 
     """
     df_metrics = _build_metrics_dataframe(db, case_id)
 
-    session_ids = df_metrics["session_id"].tolist() if not df_metrics.empty else []
+    session_ids = df_metrics["session_id"].tolist(
+    ) if not df_metrics.empty else []
     logs = []
     if session_ids:
         log_rows = (
@@ -229,38 +235,39 @@ def export_raw_workflow_csv(session_id: int = Query(...), researcher: User = Dep
     distinguishing row types. Useful for qualitative/detailed review of
     one participant's session.
     """
-    session = db.query(ReconstructionSession).filter(ReconstructionSession.id == session_id).first()
+    session = db.query(ReconstructionSession).filter(
+        ReconstructionSession.id == session_id).first()
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
     rows = []
     for o in session.observations:
         rows.append({"record_type": "observation", "id": o.id, "observation_text": o.observation_text,
-                      "source": o.source, "observed_timestamp": o.observed_timestamp, "created_at": o.created_at})
+                     "source": o.source, "observed_timestamp": o.observed_timestamp, "created_at": o.created_at})
     for h in session.hypotheses:
         rows.append({"record_type": "hypothesis", "id": h.id, "title": h.title, "description": h.description,
-                      "initial_confidence": h.initial_confidence, "current_confidence": h.current_confidence,
-                      "abandoned_at": h.abandoned_at, "is_retained_at_final": h.is_retained_at_final,
-                      "created_at": h.created_at})
+                     "initial_confidence": h.initial_confidence, "current_confidence": h.current_confidence,
+                     "abandoned_at": h.abandoned_at, "is_retained_at_final": h.is_retained_at_final,
+                     "created_at": h.created_at})
         for r in h.revisions:
             rows.append({"record_type": "hypothesis_revision", "id": r.id, "hypothesis_id": h.id,
-                          "previous_confidence": r.previous_confidence, "new_confidence": r.new_confidence,
-                          "rationale": r.rationale, "created_at": r.created_at})
+                         "previous_confidence": r.previous_confidence, "new_confidence": r.new_confidence,
+                         "rationale": r.rationale, "created_at": r.created_at})
     for link in session.evidence_links:
         rows.append({"record_type": "evidence_link", "id": link.id, "evidence_item_id": link.evidence_item_id,
-                      "hypothesis_id": link.hypothesis_id, "stance": link.stance, "stance_value": link.stance_value,
-                      "likelihood_ratio": link.likelihood_ratio, "created_at": link.created_at})
+                     "hypothesis_id": link.hypothesis_id, "stance": link.stance, "stance_value": link.stance_value,
+                     "likelihood_ratio": link.likelihood_ratio, "created_at": link.created_at})
     for a in session.acknowledgements:
         rows.append({"record_type": "alternative_acknowledgement", "id": a.id, "item_type": a.item_type,
-                      "hypothesis_id": a.hypothesis_id, "evidence_item_id": a.evidence_item_id,
-                      "acknowledged": a.acknowledged, "acknowledged_at": a.acknowledged_at,
-                      "reflection_note": a.reflection_note, "created_at": a.created_at})
+                     "hypothesis_id": a.hypothesis_id, "evidence_item_id": a.evidence_item_id,
+                     "acknowledged": a.acknowledged, "acknowledged_at": a.acknowledged_at,
+                     "reflection_note": a.reflection_note, "created_at": a.created_at})
     if session.final_reconstruction:
         f = session.final_reconstruction
         rows.append({"record_type": "final_reconstruction", "id": f.id,
-                      "selected_hypothesis_id": f.selected_hypothesis_id, "final_narrative": f.final_narrative,
-                      "final_confidence": f.final_confidence, "accuracy_score": f.accuracy_score,
-                      "created_at": f.created_at})
+                     "selected_hypothesis_id": f.selected_hypothesis_id, "final_narrative": f.final_narrative,
+                     "final_confidence": f.final_confidence, "accuracy_score": f.accuracy_score,
+                     "created_at": f.created_at})
 
     df = pd.DataFrame(rows)
     buffer = io.StringIO()
@@ -269,5 +276,6 @@ def export_raw_workflow_csv(session_id: int = Query(...), researcher: User = Dep
     return StreamingResponse(
         iter([buffer.getvalue()]),
         media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename=session_{session_id}_raw_data.csv"},
+        headers={
+            "Content-Disposition": f"attachment; filename=session_{session_id}_raw_data.csv"},
     )

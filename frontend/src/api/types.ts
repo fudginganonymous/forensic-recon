@@ -15,6 +15,7 @@ export interface User {
   email: string | null;
   role: UserRole;
   is_active: boolean;
+  has_consented: boolean;
   created_at: string;
 }
 

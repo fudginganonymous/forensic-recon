@@ -1,6 +1,7 @@
 """
 Pydantic schemas for authentication and user representation.
 """
+from app.core.deps import get_current_user
 from datetime import datetime
 from typing import Optional, Literal
 from pydantic import BaseModel, Field, ConfigDict
@@ -21,6 +22,7 @@ class UserOut(BaseModel):
     email: Optional[str] = None
     role: str
     is_active: bool
+    has_consented: bool
     created_at: datetime
 
 
@@ -33,3 +35,17 @@ class Token(BaseModel):
 class LoginRequest(BaseModel):
     username: str
     password: str
+
+
+@router.post("/consent", response_model=UserOut)
+def record_consent(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """
+    Records that the participant has given informed consent.
+    Called once after registration when the participant clicks
+    'I consent' on the consent page. Idempotent — safe to call
+    multiple times.
+    """
+    current_user.has_consented = True
+    db.commit()
+    db.refresh(current_user)
+    return current_user

@@ -126,9 +126,51 @@ def add_evidence_item(
     return item
 
 
+@router.patch("/{case_id}/evidence/{evidence_id}", response_model=EvidenceItemOut)
+def edit_evidence_item(
+    case_id: int,
+    evidence_id: int,
+    label: str = Form(None),
+    description: str = Form(None),
+    is_contradictory_by_design: bool = Form(None),
+    file: UploadFile | None = File(None),
+    researcher: User = Depends(require_researcher),
+    db: Session = Depends(get_db),
+):
+    """
+    Edit an existing evidence item. All fields are optional — only
+    supplied fields are updated. A new file upload replaces the old one.
+    """
+    item = db.query(EvidenceItem).filter(EvidenceItem.id ==
+                                         evidence_id, EvidenceItem.case_id == case_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Evidence item not found")
+
+    if label is not None:
+        item.label = label
+    if description is not None:
+        item.description = description
+    if is_contradictory_by_design is not None:
+        item.is_contradictory_by_design = is_contradictory_by_design
+
+    if file is not None:
+        os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+        case_dir = os.path.join(settings.UPLOAD_DIR, f"case_{case_id}")
+        os.makedirs(case_dir, exist_ok=True)
+        dest_path = os.path.join(case_dir, file.filename)
+        with open(dest_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        item.file_path = dest_path
+
+    db.commit()
+    db.refresh(item)
+    return item
+
+
 @router.delete("/{case_id}/evidence/{evidence_id}", status_code=204)
 def delete_evidence_item(case_id: int, evidence_id: int, researcher: User = Depends(require_researcher), db: Session = Depends(get_db)):
-    item = db.query(EvidenceItem).filter(EvidenceItem.id == evidence_id, EvidenceItem.case_id == case_id).first()
+    item = db.query(EvidenceItem).filter(EvidenceItem.id ==
+                                         evidence_id, EvidenceItem.case_id == case_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Evidence item not found")
     db.delete(item)

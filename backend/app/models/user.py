@@ -28,7 +28,9 @@ class User(Base):
     role = Column(String, nullable=False, default="participant")
 
     is_active = Column(Boolean, default=True)
+    has_consented = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # A participant may have multiple session attempts (one per assigned case)
-    sessions = relationship("ReconstructionSession", back_populates="participant")
+    sessions = relationship("ReconstructionSession",
+                            back_populates="participant")

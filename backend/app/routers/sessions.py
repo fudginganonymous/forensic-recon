@@ -1,25 +1,25 @@
 """
 Sessions router.
 
-Implements the full 5-stage reconstruction workflow:
+Implements the full 6-stage reconstruction workflow:
   1. Observation
-  2. Hypothesis Generation
-  3. Evidence Evaluation
-  4. Alternative Hypothesis Review
-  5. Final Reconstruction
+  2. Evidence Review (read-only evidence study before hypotheses)
+  3. Hypothesis Generation
+  4. Evidence Evaluation
+  5. Alternative Hypothesis Review
+  6. Final Reconstruction
+  7 = Completed (current_stage value after submission)
 
-Stage-progression rules are enforced server-side via `_advance_stage`
-checks on each "complete stage" endpoint, in addition to whatever the
-frontend UI prevents - this ensures data integrity for research metrics
-even if the API is called directly.
+Stage-progression rules are enforced server-side. All mutating actions
+are logged to ActivityLog for behavioural analysis. SessionMetrics are
+recomputed after each stage transition.
 
-All mutating actions are logged to ActivityLog via
-app.services.metrics._log_event for behavioural analysis, and
-SessionMetrics are recomputed after each stage transition.
+Edit endpoints allow participants to revise any prior stage's data
+before final submission, supporting the "go back and edit" requirement.
 """
 import json
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session as DBSession
@@ -53,10 +53,8 @@ router = APIRouter(prefix="/sessions", tags=["Reconstruction Sessions"])
 # ---------------------------------------------------------------------------
 
 def _get_owned_session(session_id: int, user: User, db: DBSession) -> ReconstructionSession:
-    """Fetch a session and ensure it belongs to the requesting participant
-    (or the user is a researcher, who may view any session read-only via
-    the researcher dashboard router)."""
-    session = db.query(ReconstructionSession).filter(ReconstructionSession.id == session_id).first()
+    session = db.query(ReconstructionSession).filter(
+        ReconstructionSession.id == session_id).first()
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     if user.role == "participant" and session.participant_id != user.id:
@@ -69,7 +67,16 @@ def _require_stage(session: ReconstructionSession, minimum_stage: int):
         raise HTTPException(
             status_code=400,
             detail=f"This action requires the session to be at stage {minimum_stage} "
-                   f"(currently at stage {session.current_stage}).",
+            f"(currently at stage {session.current_stage}).",
+        )
+
+
+def _require_not_completed(session: ReconstructionSession):
+    """Prevent edits after final submission."""
+    if session.current_stage == 7:
+        raise HTTPException(
+            status_code=400,
+            detail="This session has been completed and can no longer be edited.",
         )
 
 
@@ -78,14 +85,18 @@ def _require_stage(session: ReconstructionSession, minimum_stage: int):
 # ---------------------------------------------------------------------------
 
 @router.post("", response_model=SessionOut, status_code=201)
-def start_session(session_in: SessionCreate, participant: User = Depends(require_participant), db: DBSession = Depends(get_db)):
-    """Start a new reconstruction session for a case. A participant may
-    start multiple sessions (e.g. across different cases), but only one
-    active (incomplete) session per case is recommended - the frontend
-    should check `/sessions/mine` first."""
-    case = db.query(Case).filter(Case.id == session_in.case_id, Case.is_active == True).first()  # noqa: E712
+def start_session(
+    session_in: SessionCreate,
+    participant: User = Depends(require_participant),
+    db: DBSession = Depends(get_db),
+):
+    case = db.query(Case).filter(
+        Case.id == session_in.case_id,
+        Case.is_active == True,  # noqa: E712
+    ).first()
     if not case:
-        raise HTTPException(status_code=404, detail="Case not found or inactive")
+        raise HTTPException(
+            status_code=404, detail="Case not found or inactive")
 
     session = ReconstructionSession(
         participant_id=participant.id,
@@ -103,7 +114,10 @@ def start_session(session_in: SessionCreate, participant: User = Depends(require
 
 
 @router.get("/mine", response_model=List[SessionOut])
-def my_sessions(participant: User = Depends(require_participant), db: DBSession = Depends(get_db)):
+def my_sessions(
+    participant: User = Depends(require_participant),
+    db: DBSession = Depends(get_db),
+):
     return (
         db.query(ReconstructionSession)
         .filter(ReconstructionSession.participant_id == participant.id)
@@ -113,7 +127,11 @@ def my_sessions(participant: User = Depends(require_participant), db: DBSession 
 
 
 @router.get("/{session_id}", response_model=SessionDetailOut)
-def get_session_detail(session_id: int, current_user: User = Depends(get_current_user), db: DBSession = Depends(get_db)):
+def get_session_detail(
+    session_id: int,
+    current_user: User = Depends(get_current_user),
+    db: DBSession = Depends(get_db),
+):
     return _get_owned_session(session_id, current_user, db)
 
 
@@ -122,8 +140,14 @@ def get_session_detail(session_id: int, current_user: User = Depends(get_current
 # ---------------------------------------------------------------------------
 
 @router.post("/{session_id}/observations", response_model=ObservationOut, status_code=201)
-def add_observation(session_id: int, obs_in: ObservationCreate, participant: User = Depends(require_participant), db: DBSession = Depends(get_db)):
+def add_observation(
+    session_id: int,
+    obs_in: ObservationCreate,
+    participant: User = Depends(require_participant),
+    db: DBSession = Depends(get_db),
+):
     session = _get_owned_session(session_id, participant, db)
+    _require_not_completed(session)
 
     observation = Observation(
         session_id=session.id,
@@ -135,30 +159,87 @@ def add_observation(session_id: int, obs_in: ObservationCreate, participant: Use
     db.commit()
     db.refresh(observation)
 
-    _log_event(db, session, ET.OBSERVATION_CREATED, {"observation_id": observation.id})
+    _log_event(db, session, ET.OBSERVATION_CREATED,
+               {"observation_id": observation.id})
     db.commit()
     return observation
 
 
+@router.patch("/{session_id}/observations/{observation_id}", response_model=ObservationOut)
+def edit_observation(
+    session_id: int,
+    observation_id: int,
+    obs_in: ObservationCreate,
+    participant: User = Depends(require_participant),
+    db: DBSession = Depends(get_db),
+):
+    """Edit an existing observation. Available until session is completed."""
+    session = _get_owned_session(session_id, participant, db)
+    _require_not_completed(session)
+
+    observation = db.query(Observation).filter(
+        Observation.id == observation_id,
+        Observation.session_id == session.id,
+    ).first()
+    if not observation:
+        raise HTTPException(status_code=404, detail="Observation not found")
+
+    observation.observation_text = obs_in.observation_text
+    observation.source = obs_in.source
+    observation.observed_timestamp = obs_in.observed_timestamp
+    db.commit()
+    db.refresh(observation)
+    return observation
+
+
+@router.delete("/{session_id}/observations/{observation_id}", status_code=204)
+def delete_observation(
+    session_id: int,
+    observation_id: int,
+    participant: User = Depends(require_participant),
+    db: DBSession = Depends(get_db),
+):
+    """Delete an observation. Available until session is completed."""
+    session = _get_owned_session(session_id, participant, db)
+    _require_not_completed(session)
+
+    observation = db.query(Observation).filter(
+        Observation.id == observation_id,
+        Observation.session_id == session.id,
+    ).first()
+    if not observation:
+        raise HTTPException(status_code=404, detail="Observation not found")
+
+    db.delete(observation)
+    db.commit()
+    return None
+
+
 @router.get("/{session_id}/observations", response_model=List[ObservationOut])
-def list_observations(session_id: int, current_user: User = Depends(get_current_user), db: DBSession = Depends(get_db)):
+def list_observations(
+    session_id: int,
+    current_user: User = Depends(get_current_user),
+    db: DBSession = Depends(get_db),
+):
     session = _get_owned_session(session_id, current_user, db)
     return session.observations
 
 
 @router.post("/{session_id}/advance-to-stage-2", response_model=SessionOut)
-def advance_to_stage_2(session_id: int, participant: User = Depends(require_participant), db: DBSession = Depends(get_db)):
-    """
-    Complete Stage 1. Requires at least one observation recorded.
-    (The spec says "store all entries" without a strict minimum count,
-    but at least one observation is required to ensure participants
-    engage with the stage before proceeding.)
-    """
+def advance_to_stage_2(
+    session_id: int,
+    participant: User = Depends(require_participant),
+    db: DBSession = Depends(get_db),
+):
+    """Complete Stage 1 (Observation). Requires at least one observation."""
     session = _get_owned_session(session_id, participant, db)
     _require_stage(session, 1)
 
     if len(session.observations) < 1:
-        raise HTTPException(status_code=400, detail="At least one observation is required before proceeding.")
+        raise HTTPException(
+            status_code=400,
+            detail="At least one observation is required before proceeding.",
+        )
 
     if session.current_stage == 1:
         session.current_stage = 2
@@ -169,13 +250,44 @@ def advance_to_stage_2(session_id: int, participant: User = Depends(require_part
 
 
 # ---------------------------------------------------------------------------
-# Stage 2: Hypothesis Generation
+# Stage 2: Evidence Review (read-only study of evidence before hypotheses)
+# ---------------------------------------------------------------------------
+
+@router.post("/{session_id}/advance-to-stage-3", response_model=SessionOut)
+def advance_to_stage_3(
+    session_id: int,
+    participant: User = Depends(require_participant),
+    db: DBSession = Depends(get_db),
+):
+    """
+    Complete Stage 2 (Evidence Review). Records the stage transition
+    and timestamp in the activity log for research analysis.
+    """
+    session = _get_owned_session(session_id, participant, db)
+    _require_stage(session, 2)
+
+    if session.current_stage == 2:
+        session.current_stage = 3
+        _log_event(db, session, ET.STAGE_ADVANCED, {"to_stage": 3})
+        db.commit()
+        db.refresh(session)
+    return session
+
+
+# ---------------------------------------------------------------------------
+# Stage 3: Hypothesis Generation
 # ---------------------------------------------------------------------------
 
 @router.post("/{session_id}/hypotheses", response_model=HypothesisOut, status_code=201)
-def add_hypothesis(session_id: int, hyp_in: HypothesisCreate, participant: User = Depends(require_participant), db: DBSession = Depends(get_db)):
+def add_hypothesis(
+    session_id: int,
+    hyp_in: HypothesisCreate,
+    participant: User = Depends(require_participant),
+    db: DBSession = Depends(get_db),
+):
     session = _get_owned_session(session_id, participant, db)
-    _require_stage(session, 2)
+    _require_stage(session, 3)
+    _require_not_completed(session)
 
     hypothesis = Hypothesis(
         session_id=session.id,
@@ -200,25 +312,42 @@ def add_hypothesis(session_id: int, hyp_in: HypothesisCreate, participant: User 
 
 
 @router.get("/{session_id}/hypotheses", response_model=List[HypothesisOut])
-def list_hypotheses(session_id: int, current_user: User = Depends(get_current_user), db: DBSession = Depends(get_db)):
+def list_hypotheses(
+    session_id: int,
+    current_user: User = Depends(get_current_user),
+    db: DBSession = Depends(get_db),
+):
     session = _get_owned_session(session_id, current_user, db)
     return session.hypotheses
 
 
 @router.patch("/{session_id}/hypotheses/{hypothesis_id}", response_model=HypothesisOut)
-def revise_hypothesis(session_id: int, hypothesis_id: int, update_in: HypothesisUpdate, participant: User = Depends(require_participant), db: DBSession = Depends(get_db)):
+def revise_hypothesis(
+    session_id: int,
+    hypothesis_id: int,
+    update_in: HypothesisUpdate,
+    participant: User = Depends(require_participant),
+    db: DBSession = Depends(get_db),
+):
     """
-    Revise a hypothesis's confidence and/or description. Every change to
-    `current_confidence` creates a HypothesisRevision row, which feeds
-    the "number of hypothesis revisions" flexibility component and the
-    confidence calibration analysis.
+    Revise a hypothesis confidence or description. Available at any
+    stage before completion. Every confidence change creates a
+    HypothesisRevision row for the metrics trail.
     """
     session = _get_owned_session(session_id, participant, db)
-    hypothesis = db.query(Hypothesis).filter(Hypothesis.id == hypothesis_id, Hypothesis.session_id == session.id).first()
+    _require_not_completed(session)
+
+    hypothesis = db.query(Hypothesis).filter(
+        Hypothesis.id == hypothesis_id,
+        Hypothesis.session_id == session.id,
+    ).first()
     if not hypothesis:
         raise HTTPException(status_code=404, detail="Hypothesis not found")
 
-    if update_in.current_confidence is not None and update_in.current_confidence != hypothesis.current_confidence:
+    if (
+        update_in.current_confidence is not None
+        and update_in.current_confidence != hypothesis.current_confidence
+    ):
         revision = HypothesisRevision(
             hypothesis_id=hypothesis.id,
             previous_confidence=hypothesis.current_confidence,
@@ -239,27 +368,33 @@ def revise_hypothesis(session_id: int, hypothesis_id: int, update_in: Hypothesis
 
     db.commit()
     db.refresh(hypothesis)
-
     _maybe_update_first_preferred(db, session)
     return hypothesis
 
 
 @router.post("/{session_id}/hypotheses/{hypothesis_id}/abandon", response_model=HypothesisOut)
-def abandon_hypothesis(session_id: int, hypothesis_id: int, body: HypothesisAbandon, participant: User = Depends(require_participant), db: DBSession = Depends(get_db)):
-    """
-    Explicitly mark a hypothesis as abandoned (no longer under
-    consideration). Feeds "number of hypotheses abandoned early" if done
-    before Stage 5, and sets is_retained_at_final = False.
-    """
+def abandon_hypothesis(
+    session_id: int,
+    hypothesis_id: int,
+    body: HypothesisAbandon,
+    participant: User = Depends(require_participant),
+    db: DBSession = Depends(get_db),
+):
     session = _get_owned_session(session_id, participant, db)
-    hypothesis = db.query(Hypothesis).filter(Hypothesis.id == hypothesis_id, Hypothesis.session_id == session.id).first()
+    _require_not_completed(session)
+
+    hypothesis = db.query(Hypothesis).filter(
+        Hypothesis.id == hypothesis_id,
+        Hypothesis.session_id == session.id,
+    ).first()
     if not hypothesis:
         raise HTTPException(status_code=404, detail="Hypothesis not found")
 
     if body.abandon:
         hypothesis.abandoned_at = datetime.now(timezone.utc)
         hypothesis.is_retained_at_final = False
-        _log_event(db, session, ET.HYPOTHESIS_ABANDONED, {"hypothesis_id": hypothesis.id})
+        _log_event(db, session, ET.HYPOTHESIS_ABANDONED,
+                   {"hypothesis_id": hypothesis.id})
     else:
         hypothesis.abandoned_at = None
         hypothesis.is_retained_at_final = True
@@ -269,10 +404,41 @@ def abandon_hypothesis(session_id: int, hypothesis_id: int, body: HypothesisAban
     return hypothesis
 
 
+@router.delete("/{session_id}/hypotheses/{hypothesis_id}", status_code=204)
+def delete_hypothesis(
+    session_id: int,
+    hypothesis_id: int,
+    participant: User = Depends(require_participant),
+    db: DBSession = Depends(get_db),
+):
+    """Delete a hypothesis entirely. Available before completion."""
+    session = _get_owned_session(session_id, participant, db)
+    _require_not_completed(session)
+
+    hypothesis = db.query(Hypothesis).filter(
+        Hypothesis.id == hypothesis_id,
+        Hypothesis.session_id == session.id,
+    ).first()
+    if not hypothesis:
+        raise HTTPException(status_code=404, detail="Hypothesis not found")
+
+    db.delete(hypothesis)
+    db.commit()
+    return None
+
+
 @router.get("/{session_id}/hypotheses/{hypothesis_id}/revisions", response_model=List[HypothesisRevisionOut])
-def list_hypothesis_revisions(session_id: int, hypothesis_id: int, current_user: User = Depends(get_current_user), db: DBSession = Depends(get_db)):
+def list_hypothesis_revisions(
+    session_id: int,
+    hypothesis_id: int,
+    current_user: User = Depends(get_current_user),
+    db: DBSession = Depends(get_db),
+):
     session = _get_owned_session(session_id, current_user, db)
-    hypothesis = db.query(Hypothesis).filter(Hypothesis.id == hypothesis_id, Hypothesis.session_id == session.id).first()
+    hypothesis = db.query(Hypothesis).filter(
+        Hypothesis.id == hypothesis_id,
+        Hypothesis.session_id == session.id,
+    ).first()
     if not hypothesis:
         raise HTTPException(status_code=404, detail="Hypothesis not found")
     return hypothesis.revisions
@@ -280,79 +446,86 @@ def list_hypothesis_revisions(session_id: int, hypothesis_id: int, current_user:
 
 def _maybe_update_first_preferred(db: DBSession, session: ReconstructionSession):
     """
-    Detect the "currently favoured" hypothesis (highest current_confidence
-    among non-abandoned hypotheses) and, the first time one exists, record
-    `first_preferred_hypothesis_at` for the "time to first preferred
-    hypothesis" premature closure metric. This timestamp is set ONCE and
-    never overwritten, even if the favoured hypothesis later changes.
+    Detect the currently favoured hypothesis and record the first time
+    one emerges, for the premature closure timing metric.
     """
     if session.first_preferred_hypothesis_at is not None:
         return
 
-    active_hypotheses = [h for h in session.hypotheses if h.abandoned_at is None]
-    if not active_hypotheses:
+    active_hypotheses = [
+        h for h in session.hypotheses if h.abandoned_at is None]
+    if not active_hypotheses or len(session.hypotheses) < 2:
         return
 
-    # Only meaningful once there are at least 2 hypotheses (the minimum
-    # required by Stage 2) and one has a strictly higher confidence than
-    # the rest.
-    if len(session.hypotheses) < 2:
-        return
-
-    sorted_h = sorted(active_hypotheses, key=lambda h: h.current_confidence, reverse=True)
+    sorted_h = sorted(active_hypotheses,
+                      key=lambda h: h.current_confidence, reverse=True)
     if len(sorted_h) >= 2 and sorted_h[0].current_confidence > sorted_h[1].current_confidence:
         session.first_preferred_hypothesis_at = datetime.now(timezone.utc)
-        _log_event(db, session, ET.HYPOTHESIS_BECAME_PREFERRED, {"hypothesis_id": sorted_h[0].id})
+        _log_event(db, session, ET.HYPOTHESIS_BECAME_PREFERRED, {
+            "hypothesis_id": sorted_h[0].id,
+        })
         db.commit()
 
 
-@router.post("/{session_id}/advance-to-stage-3", response_model=SessionOut)
-def advance_to_stage_3(session_id: int, participant: User = Depends(require_participant), db: DBSession = Depends(get_db)):
-    """Complete Stage 2. Requires at least two (non-abandoned) hypotheses."""
+@router.post("/{session_id}/advance-to-stage-4", response_model=SessionOut)
+def advance_to_stage_4(
+    session_id: int,
+    participant: User = Depends(require_participant),
+    db: DBSession = Depends(get_db),
+):
+    """Complete Stage 3 (Hypothesis Generation). Requires at least two active hypotheses."""
     session = _get_owned_session(session_id, participant, db)
-    _require_stage(session, 2)
+    _require_stage(session, 3)
 
     active = [h for h in session.hypotheses if h.abandoned_at is None]
     if len(active) < 2:
-        raise HTTPException(status_code=400, detail="At least two competing hypotheses are required before proceeding.")
+        raise HTTPException(
+            status_code=400,
+            detail="At least two competing hypotheses are required before proceeding.",
+        )
 
-    if session.current_stage == 2:
-        session.current_stage = 3
-        _log_event(db, session, ET.STAGE_ADVANCED, {"to_stage": 3})
+    if session.current_stage == 3:
+        session.current_stage = 4
+        _log_event(db, session, ET.STAGE_ADVANCED, {"to_stage": 4})
         db.commit()
         db.refresh(session)
     return session
 
 
-# ===========================================================================
-# Stages 3-5 (continued)
-# ===========================================================================
-
-
 # ---------------------------------------------------------------------------
-# Stage 3: Evidence Evaluation
+# Stage 4: Evidence Evaluation
 # ---------------------------------------------------------------------------
 
 @router.post("/{session_id}/evidence-links", response_model=EvidenceLinkOut, status_code=201)
-def create_or_update_evidence_link(session_id: int, link_in: EvidenceLinkCreate, participant: User = Depends(require_participant), db: DBSession = Depends(get_db)):
+def create_or_update_evidence_link(
+    session_id: int,
+    link_in: EvidenceLinkCreate,
+    participant: User = Depends(require_participant),
+    db: DBSession = Depends(get_db),
+):
     """
-    Record (or update) a participant's evaluation of one evidence item
-    against one hypothesis. If a link for this
-    (session, evidence_item, hypothesis) combination already exists, it
-    is updated in place (an UPDATE counts towards
-    `num_evidence_hypothesis_links` only once via distinct rows, but the
-    update event itself is still logged for behavioural analysis).
+    Record or update an evidence-hypothesis stance link.
+    Available from Stage 4 onward and editable before completion.
     """
     session = _get_owned_session(session_id, participant, db)
-    _require_stage(session, 3)
+    _require_stage(session, 4)
+    _require_not_completed(session)
 
-    evidence_item = db.query(EvidenceItem).filter(EvidenceItem.id == link_in.evidence_item_id, EvidenceItem.case_id == session.case_id).first()
+    evidence_item = db.query(EvidenceItem).filter(
+        EvidenceItem.id == link_in.evidence_item_id,
+        EvidenceItem.case_id == session.case_id,
+    ).first()
     if not evidence_item:
-        raise HTTPException(status_code=404, detail="Evidence item not found for this case")
+        raise HTTPException(
+            status_code=404, detail="Evidence item not found for this case")
 
-    hypothesis = db.query(Hypothesis).filter(Hypothesis.id == link_in.hypothesis_id, Hypothesis.session_id == session.id).first()
+    hypothesis = db.query(Hypothesis).filter(
+        Hypothesis.id == link_in.hypothesis_id,
+        Hypothesis.session_id == session.id,
+    ).first()
     if not hypothesis:
-        raise HTTPException(status_code=404, detail="Hypothesis not found for this session")
+        raise HTTPException(
+            status_code=404, detail="Hypothesis not found for this session")
 
     existing = (
         db.query(EvidenceHypothesisLink)
@@ -397,26 +570,27 @@ def create_or_update_evidence_link(session_id: int, link_in: EvidenceLinkCreate,
 
 
 @router.get("/{session_id}/evidence-links", response_model=List[EvidenceLinkOut])
-def list_evidence_links(session_id: int, current_user: User = Depends(get_current_user), db: DBSession = Depends(get_db)):
+def list_evidence_links(
+    session_id: int,
+    current_user: User = Depends(get_current_user),
+    db: DBSession = Depends(get_db),
+):
     session = _get_owned_session(session_id, current_user, db)
     return session.evidence_links
 
 
 @router.get("/{session_id}/evidence-review-status", response_model=EvidenceReviewStatus)
-def evidence_review_status(session_id: int, current_user: User = Depends(get_current_user), db: DBSession = Depends(get_db)):
-    """
-    Returns which evidence items have at least one
-    EvidenceHypothesisLink in this session, supporting the frontend's
-    enforcement of "Require all evidence items to be reviewed" before
-    Stage 4.
-    """
+def evidence_review_status(
+    session_id: int,
+    current_user: User = Depends(get_current_user),
+    db: DBSession = Depends(get_db),
+):
     session = _get_owned_session(session_id, current_user, db)
-
-    all_items = db.query(EvidenceItem).filter(EvidenceItem.case_id == session.case_id).all()
+    all_items = db.query(EvidenceItem).filter(
+        EvidenceItem.case_id == session.case_id,
+    ).all()
     reviewed_ids = {link.evidence_item_id for link in session.evidence_links}
-
     unreviewed = [item.id for item in all_items if item.id not in reviewed_ids]
-
     return EvidenceReviewStatus(
         total_evidence_items=len(all_items),
         reviewed_evidence_items=len(reviewed_ids),
@@ -425,63 +599,63 @@ def evidence_review_status(session_id: int, current_user: User = Depends(get_cur
     )
 
 
-@router.post("/{session_id}/advance-to-stage-4", response_model=SessionOut)
-def advance_to_stage_4(session_id: int, participant: User = Depends(require_participant), db: DBSession = Depends(get_db)):
+@router.post("/{session_id}/advance-to-stage-5", response_model=SessionOut)
+def advance_to_stage_5(
+    session_id: int,
+    participant: User = Depends(require_participant),
+    db: DBSession = Depends(get_db),
+):
     """
-    Complete Stage 3. Requires every evidence item in the case to have
-    been reviewed (linked to at least one hypothesis), per the
-    specification's "Require all evidence items to be reviewed".
-
-    On advancing, this endpoint automatically generates the Stage 4
-    AlternativeAcknowledgement rows: not-favoured hypotheses,
-    contradictory evidence (for the favoured hypothesis), and
-    unassigned evidence.
+    Complete Stage 4 (Evidence Evaluation). Requires all evidence items
+    reviewed. Generates Stage 5 acknowledgement rows automatically.
     """
     session = _get_owned_session(session_id, participant, db)
-    _require_stage(session, 3)
+    _require_stage(session, 4)
 
     status_check = evidence_review_status(session_id, participant, db)
     if not status_check.all_reviewed:
         raise HTTPException(
             status_code=400,
-            detail=f"All evidence items must be reviewed before proceeding. "
-                   f"{len(status_check.unreviewed_evidence_item_ids)} item(s) remaining.",
+            detail=(
+                f"All evidence items must be reviewed before proceeding. "
+                f"{len(status_check.unreviewed_evidence_item_ids)} item(s) remaining."
+            ),
         )
 
-    if session.current_stage == 3:
-        _generate_stage4_acknowledgement_items(db, session)
-        session.current_stage = 4
-        _log_event(db, session, ET.STAGE_ADVANCED, {"to_stage": 4})
+    if session.current_stage == 4:
+        _generate_stage5_acknowledgement_items(db, session)
+        session.current_stage = 5
+        _log_event(db, session, ET.STAGE_ADVANCED, {"to_stage": 5})
         db.commit()
         db.refresh(session)
 
     return session
 
 
-def _generate_stage4_acknowledgement_items(db: DBSession, session: ReconstructionSession):
+def _generate_stage5_acknowledgement_items(
+    db: DBSession,
+    session: ReconstructionSession,
+):
     """
-    Determine the "favoured" hypothesis (highest current_confidence among
-    non-abandoned hypotheses) and generate AlternativeAcknowledgement rows for:
-      - every other non-abandoned hypothesis ("alternative_hypothesis")
-      - every evidence item linked to the favoured hypothesis with stance
-        in {contradicts, weakly_contradicts} ("contradictory_evidence")
-      - every evidence item with NO link to the favoured hypothesis
-        ("unassigned_evidence")
-
-    Idempotent: does nothing if rows already exist for this session
-    (e.g. if advance-to-stage-4 is called more than once).
+    Generate AlternativeAcknowledgement rows for Stage 5 review.
+    Idempotent — does nothing if rows already exist.
     """
-    existing_count = db.query(AlternativeAcknowledgement).filter(AlternativeAcknowledgement.session_id == session.id).count()
+    existing_count = (
+        db.query(AlternativeAcknowledgement)
+        .filter(AlternativeAcknowledgement.session_id == session.id)
+        .count()
+    )
     if existing_count > 0:
         return
 
-    active_hypotheses = [h for h in session.hypotheses if h.abandoned_at is None]
+    active_hypotheses = [
+        h for h in session.hypotheses if h.abandoned_at is None]
     if not active_hypotheses:
         return
 
     favoured = max(active_hypotheses, key=lambda h: h.current_confidence)
 
-    # 1. Alternative (not-favoured) hypotheses
+    # Alternative (not-favoured) hypotheses
     for h in active_hypotheses:
         if h.id != favoured.id:
             db.add(AlternativeAcknowledgement(
@@ -490,7 +664,7 @@ def _generate_stage4_acknowledgement_items(db: DBSession, session: Reconstructio
                 hypothesis_id=h.id,
             ))
 
-    # 2. Contradictory evidence for the favoured hypothesis
+    # Contradictory evidence for the favoured hypothesis
     favoured_links = {
         link.evidence_item_id: link
         for link in session.evidence_links
@@ -504,8 +678,12 @@ def _generate_stage4_acknowledgement_items(db: DBSession, session: Reconstructio
                 evidence_item_id=evidence_item_id,
             ))
 
-    # 3. Evidence items with no link at all to the favoured hypothesis
-    all_evidence_ids = {item.id for item in db.query(EvidenceItem).filter(EvidenceItem.case_id == session.case_id).all()}
+    # Evidence with no link to the favoured hypothesis at all
+    all_evidence_ids = {
+        item.id for item in
+        db.query(EvidenceItem).filter(
+            EvidenceItem.case_id == session.case_id).all()
+    }
     unassigned_ids = all_evidence_ids - set(favoured_links.keys())
     for evidence_item_id in unassigned_ids:
         db.add(AlternativeAcknowledgement(
@@ -518,23 +696,32 @@ def _generate_stage4_acknowledgement_items(db: DBSession, session: Reconstructio
 
 
 # ---------------------------------------------------------------------------
-# Stage 4: Alternative Hypothesis Review
+# Stage 5: Alternative Hypothesis Review
 # ---------------------------------------------------------------------------
 
 @router.get("/{session_id}/alternative-review", response_model=List[AlternativeReviewItemOut])
-def list_alternative_review_items(session_id: int, current_user: User = Depends(get_current_user), db: DBSession = Depends(get_db)):
+def list_alternative_review_items(
+    session_id: int,
+    current_user: User = Depends(get_current_user),
+    db: DBSession = Depends(get_db),
+):
     session = _get_owned_session(session_id, current_user, db)
     return session.acknowledgements
 
 
-@router.post("/{session_id}/alternative-review/{item_id}/acknowledge", response_model=AlternativeReviewItemOut)
-def acknowledge_item(session_id: int, item_id: int, body: AcknowledgeRequest, participant: User = Depends(require_participant), db: DBSession = Depends(get_db)):
-    """
-    Mark a Stage 4 review item as acknowledged. All items must be
-    acknowledged before the session can advance to Stage 5.
-    """
+@router.post(
+    "/{session_id}/alternative-review/{item_id}/acknowledge",
+    response_model=AlternativeReviewItemOut,
+)
+def acknowledge_item(
+    session_id: int,
+    item_id: int,
+    body: AcknowledgeRequest,
+    participant: User = Depends(require_participant),
+    db: DBSession = Depends(get_db),
+):
     session = _get_owned_session(session_id, participant, db)
-    _require_stage(session, 4)
+    _require_stage(session, 5)
 
     item = db.query(AlternativeAcknowledgement).filter(
         AlternativeAcknowledgement.id == item_id,
@@ -559,22 +746,30 @@ def acknowledge_item(session_id: int, item_id: int, body: AcknowledgeRequest, pa
     return item
 
 
-@router.post("/{session_id}/advance-to-stage-5", response_model=SessionOut)
-def advance_to_stage_5(session_id: int, participant: User = Depends(require_participant), db: DBSession = Depends(get_db)):
-    """Complete Stage 4. Requires every AlternativeAcknowledgement row to be acknowledged."""
+@router.post("/{session_id}/advance-to-stage-6", response_model=SessionOut)
+def advance_to_stage_6(
+    session_id: int,
+    participant: User = Depends(require_participant),
+    db: DBSession = Depends(get_db),
+):
+    """Complete Stage 5. Requires all acknowledgement items acknowledged."""
     session = _get_owned_session(session_id, participant, db)
-    _require_stage(session, 4)
+    _require_stage(session, 5)
 
-    unacknowledged = [a for a in session.acknowledgements if not a.acknowledged]
+    unacknowledged = [
+        a for a in session.acknowledgements if not a.acknowledged]
     if unacknowledged:
         raise HTTPException(
             status_code=400,
-            detail=f"{len(unacknowledged)} alternative review item(s) must be acknowledged before proceeding.",
+            detail=(
+                f"{len(unacknowledged)} alternative review item(s) must be "
+                f"acknowledged before proceeding."
+            ),
         )
 
-    if session.current_stage == 4:
-        session.current_stage = 5
-        _log_event(db, session, ET.STAGE_ADVANCED, {"to_stage": 5})
+    if session.current_stage == 5:
+        session.current_stage = 6
+        _log_event(db, session, ET.STAGE_ADVANCED, {"to_stage": 6})
         db.commit()
         db.refresh(session)
 
@@ -582,28 +777,39 @@ def advance_to_stage_5(session_id: int, participant: User = Depends(require_part
 
 
 # ---------------------------------------------------------------------------
-# Stage 5: Final Reconstruction
+# Stage 6: Final Reconstruction
 # ---------------------------------------------------------------------------
 
-@router.post("/{session_id}/final-reconstruction", response_model=FinalReconstructionOut, status_code=201)
-def submit_final_reconstruction(session_id: int, final_in: FinalReconstructionCreate, participant: User = Depends(require_participant), db: DBSession = Depends(get_db)):
-    """
-    Submit the final reconstruction. This is the terminal data-entry
-    step of the workflow. After submission, the session is marked
-    completed and final SessionMetrics are computed.
-    """
+@router.post(
+    "/{session_id}/final-reconstruction",
+    response_model=FinalReconstructionOut,
+    status_code=201,
+)
+def submit_final_reconstruction(
+    session_id: int,
+    final_in: FinalReconstructionCreate,
+    participant: User = Depends(require_participant),
+    db: DBSession = Depends(get_db),
+):
+    """Submit final reconstruction. Completes the session (stage -> 7)."""
     session = _get_owned_session(session_id, participant, db)
-    _require_stage(session, 5)
+    _require_stage(session, 6)
 
     hypothesis = db.query(Hypothesis).filter(
         Hypothesis.id == final_in.selected_hypothesis_id,
         Hypothesis.session_id == session.id,
     ).first()
     if not hypothesis:
-        raise HTTPException(status_code=404, detail="Selected hypothesis not found for this session")
+        raise HTTPException(
+            status_code=404,
+            detail="Selected hypothesis not found for this session",
+        )
 
     if session.final_reconstruction is not None:
-        raise HTTPException(status_code=400, detail="Final reconstruction already submitted for this session")
+        raise HTTPException(
+            status_code=400,
+            detail="Final reconstruction already submitted for this session",
+        )
 
     final = FinalReconstruction(
         session_id=session.id,
@@ -613,16 +819,10 @@ def submit_final_reconstruction(session_id: int, final_in: FinalReconstructionCr
     )
     db.add(final)
 
-    # Mark all non-abandoned hypotheses other than the selected one as
-    # "retained at final" if they were never abandoned - i.e. they
-    # remained viable alternatives even though not ultimately chosen.
     for h in session.hypotheses:
-        if h.abandoned_at is None:
-            h.is_retained_at_final = True
-        else:
-            h.is_retained_at_final = False
+        h.is_retained_at_final = h.abandoned_at is None
 
-    session.current_stage = 6  # Completed
+    session.current_stage = 7
     session.completed_at = datetime.now(timezone.utc)
 
     db.commit()
@@ -635,25 +835,33 @@ def submit_final_reconstruction(session_id: int, final_in: FinalReconstructionCr
     _log_event(db, session, ET.SESSION_COMPLETED, {})
     db.commit()
 
-    # Compute final metrics now that all data is available
     compute_session_metrics(db, session)
-
     return final
 
 
-@router.patch("/{session_id}/final-reconstruction/accuracy", response_model=FinalReconstructionOut)
-def score_accuracy(session_id: int, body: AccuracyScoreUpdate, researcher: User = Depends(get_current_user), db: DBSession = Depends(get_db)):
-    """
-    Researcher endpoint to manually score the accuracy (0-100) of a
-    participant's final reconstruction against the case's ground truth.
-    Triggers recomputation of confidence calibration metrics.
-    """
+@router.patch(
+    "/{session_id}/final-reconstruction/accuracy",
+    response_model=FinalReconstructionOut,
+)
+def score_accuracy(
+    session_id: int,
+    body: AccuracyScoreUpdate,
+    researcher: User = Depends(get_current_user),
+    db: DBSession = Depends(get_db),
+):
+    """Researcher endpoint to score reconstruction accuracy."""
     if researcher.role != "researcher":
-        raise HTTPException(status_code=403, detail="Researcher privileges required")
+        raise HTTPException(
+            status_code=403, detail="Researcher privileges required")
 
-    session = db.query(ReconstructionSession).filter(ReconstructionSession.id == session_id).first()
+    session = db.query(ReconstructionSession).filter(
+        ReconstructionSession.id == session_id,
+    ).first()
     if not session or not session.final_reconstruction:
-        raise HTTPException(status_code=404, detail="Final reconstruction not found for this session")
+        raise HTTPException(
+            status_code=404,
+            detail="Final reconstruction not found for this session",
+        )
 
     final = session.final_reconstruction
     final.accuracy_score = body.accuracy_score

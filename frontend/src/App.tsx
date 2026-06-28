@@ -14,6 +14,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AppLayout from "./components/AppLayout";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import ConsentPage from "./pages/ConsentPage";
 import ParticipantHomePage from "./pages/participant/ParticipantHomePage";
 import SessionWorkflowPage from "./pages/participant/SessionWorkflowPage";
 import ResearcherHomePage from "./pages/researcher/ResearcherHomePage";
@@ -33,6 +34,14 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
+          <Route
+            path="/consent"
+            element={
+              <ProtectedRoute role="participant">
+                <ConsentPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/participant"
             element={

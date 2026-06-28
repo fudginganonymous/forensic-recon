@@ -13,11 +13,12 @@ import { Badge, Button, Card, ErrorMessage, Input, Label, extractErrorMessage } 
 
 const STAGE_LABELS: Record<number, string> = {
   1: "Observation",
-  2: "Hypothesis Generation",
-  3: "Evidence Evaluation",
-  4: "Alternative Review",
-  5: "Final Reconstruction",
-  6: "Completed",
+  2: "Evidence Review",
+  3: "Hypothesis Generation",
+  4: "Evidence Evaluation",
+  5: "Alternative Review",
+  6: "Final Reconstruction",
+  7: "Completed",
 };
 
 export default function SessionsPanel() {
@@ -60,7 +61,7 @@ export default function SessionsPanel() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Badge color={s.current_stage === 6 ? "green" : "blue"}>{STAGE_LABELS[s.current_stage]}</Badge>
+              <Badge color={s.current_stage === 7 ? "green" : "blue"}>{STAGE_LABELS[s.current_stage]}</Badge>
               <Button variant="ghost" onClick={() => setExpandedId(expandedId === s.id ? null : s.id)}>
                 {expandedId === s.id ? "Hide details" : "View details"}
               </Button>

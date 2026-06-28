@@ -17,5 +17,10 @@ export default function ProtectedRoute({ children, role }: { children: ReactNode
   if (role && user.role !== role) {
     return <Navigate to={user.role === "researcher" ? "/researcher" : "/participant"} replace />;
   }
+  // Redirect participant to consent page if they haven't consented yet,
+  // unless they are already on the consent page
+  if (user.role === "participant" && !user.has_consented && window.location.pathname !== "/consent") {
+    return <Navigate to="/consent" replace />;
+  }
   return <>{children}</>;
 }
