@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
+from app.core.deps import get_current_user
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.auth import UserCreate, UserOut, Token
@@ -23,7 +24,8 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 def register(user_in: UserCreate, db: Session = Depends(get_db)):
     existing = db.query(User).filter(User.username == user_in.username).first()
     if existing:
-        raise HTTPException(status_code=400, detail="Username already registered")
+        raise HTTPException(
+            status_code=400, detail="Username already registered")
 
     user = User(
         username=user_in.username,
@@ -46,5 +48,20 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token = create_access_token(data={"sub": str(user.id), "role": user.role})
+    access_token = create_access_token(
+        data={"sub": str(user.id), "role": user.role})
     return Token(access_token=access_token, user=user)
+
+
+@router.post("/consent", response_model=UserOut)
+def record_consent(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """
+    Records that the participant has given informed consent.
+    Called once after registration when the participant clicks
+    'I consent' on the consent page. Idempotent — safe to call
+    multiple times.
+    """
+    current_user.has_consented = True
+    db.commit()
+    db.refresh(current_user)
+    return current_user
