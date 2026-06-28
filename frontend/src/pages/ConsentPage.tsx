@@ -25,7 +25,8 @@ export default function ConsentPage() {
             const res = await api.post<User>("/auth/consent");
             // Update stored user so has_consented is reflected immediately
             localStorage.setItem("current_user", JSON.stringify(res.data));
-            navigate("/participant");
+            // Force a full page reload so AuthContext re-reads from localStorage
+            window.location.href = "/participant";
         } catch (err) {
             setError(extractErrorMessage(err));
         } finally {
