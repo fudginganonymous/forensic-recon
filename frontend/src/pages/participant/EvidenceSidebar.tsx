@@ -96,98 +96,99 @@ export default function EvidenceSidebar({ evidenceItems }: Props) {
                                                             </button>
                                                         </div>
                                                     ) : (
-
-                                                        href = { getFileUrl(item.file_path)}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-xs text-blue-600 hover:underline flex items-center gap-1"
-                            >
-                                                    📎 Open attached file
-                                                </a>
+                                                        <a
+                                                            href={getFileUrl(item.file_path)}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+                                                        >
+                                                            📎 Open attached file
+                                                        </a>
+                                                    )}
+                                            )}
+                                                </div>
                                             )}
                                         </div>
                                     )}
                                 </div>
-                            )}
+                            ))}
                         </div>
-              ))}
                     </div>
-          </div>
-        )}
-        </div >
+                )}
+            </div >
 
-            {/* Lightbox with zoom */ }
-    {
-        lightboxItem && lightboxItem.file_path && (
-            <div
-                className="fixed inset-0 z-50 bg-black bg-opacity-90 flex flex-col items-center justify-center"
-                onClick={closeLightbox}
-            >
-                {/* Toolbar */}
-                <div
-                    className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-black bg-opacity-70 px-4 py-2 rounded-full z-10"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <button
-                        onClick={() => setZoom((z) => Math.max(0.25, z - 0.25))}
-                        className="text-white text-xl font-bold px-3 py-1 bg-slate-700 rounded hover:bg-slate-600"
-                        title="Zoom out"
-                    >
-                        −
-                    </button>
-                    <span className="text-white text-sm min-w-[52px] text-center">
-                        {Math.round(zoom * 100)}%
-                    </span>
-                    <button
-                        onClick={() => setZoom((z) => Math.min(5, z + 0.25))}
-                        className="text-white text-xl font-bold px-3 py-1 bg-slate-700 rounded hover:bg-slate-600"
-                        title="Zoom in"
-                    >
-                        +
-                    </button>
-                    <button
-                        onClick={() => setZoom(1)}
-                        className="text-white text-xs px-3 py-1 bg-slate-700 rounded hover:bg-slate-600"
-                    >
-                        Reset
-                    </button>
-                    <button
+            {/* Lightbox with zoom */}
+            {
+                lightboxItem && lightboxItem.file_path && (
+                    <div
+                        className="fixed inset-0 z-50 bg-black bg-opacity-90 flex flex-col items-center justify-center"
                         onClick={closeLightbox}
-                        className="text-white text-xs px-3 py-1 bg-red-700 rounded hover:bg-red-600 ml-2"
                     >
-                        ✕ Close
-                    </button>
-                </div>
+                        {/* Toolbar */}
+                        <div
+                            className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-black bg-opacity-70 px-4 py-2 rounded-full z-10"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <button
+                                onClick={() => setZoom((z) => Math.max(0.25, z - 0.25))}
+                                className="text-white text-xl font-bold px-3 py-1 bg-slate-700 rounded hover:bg-slate-600"
+                                title="Zoom out"
+                            >
+                                −
+                            </button>
+                            <span className="text-white text-sm min-w-[52px] text-center">
+                                {Math.round(zoom * 100)}%
+                            </span>
+                            <button
+                                onClick={() => setZoom((z) => Math.min(5, z + 0.25))}
+                                className="text-white text-xl font-bold px-3 py-1 bg-slate-700 rounded hover:bg-slate-600"
+                                title="Zoom in"
+                            >
+                                +
+                            </button>
+                            <button
+                                onClick={() => setZoom(1)}
+                                className="text-white text-xs px-3 py-1 bg-slate-700 rounded hover:bg-slate-600"
+                            >
+                                Reset
+                            </button>
+                            <button
+                                onClick={closeLightbox}
+                                className="text-white text-xs px-3 py-1 bg-red-700 rounded hover:bg-red-600 ml-2"
+                            >
+                                ✕ Close
+                            </button>
+                        </div>
 
-                {/* Label */}
-                <div className="absolute top-16 left-1/2 -translate-x-1/2 text-white text-sm bg-black bg-opacity-60 px-4 py-1 rounded-full">
-                    {lightboxItem.label}
-                </div>
+                        {/* Label */}
+                        <div className="absolute top-16 left-1/2 -translate-x-1/2 text-white text-sm bg-black bg-opacity-60 px-4 py-1 rounded-full">
+                            {lightboxItem.label}
+                        </div>
 
-                {/* Zoomable image */}
-                <div
-                    className="overflow-auto max-w-full max-h-full mt-24 mb-8 flex items-center justify-center"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <img
-                        src={getFileUrl(lightboxItem.file_path)}
-                        alt={lightboxItem.label}
-                        style={{
-                            transform: `scale(${zoom})`,
-                            transformOrigin: "center center",
-                            transition: "transform 0.15s ease",
-                            maxWidth: zoom <= 1 ? "90vw" : "none",
-                            maxHeight: zoom <= 1 ? "75vh" : "none",
-                        }}
-                    />
-                </div>
+                        {/* Zoomable image */}
+                        <div
+                            className="overflow-auto max-w-full max-h-full mt-24 mb-8 flex items-center justify-center"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <img
+                                src={getFileUrl(lightboxItem.file_path)}
+                                alt={lightboxItem.label}
+                                style={{
+                                    transform: `scale(${zoom})`,
+                                    transformOrigin: "center center",
+                                    transition: "transform 0.15s ease",
+                                    maxWidth: zoom <= 1 ? "90vw" : "none",
+                                    maxHeight: zoom <= 1 ? "75vh" : "none",
+                                }}
+                            />
+                        </div>
 
-                <p className="absolute bottom-4 text-slate-400 text-xs">
-                    Click outside image to close  •  Use + / − to zoom
-                </p>
-            </div>
-        )
-    }
-    </>
-  );
+                        <p className="absolute bottom-4 text-slate-400 text-xs">
+                            Click outside image to close  •  Use + / − to zoom
+                        </p>
+                    </div>
+                )
+            }
+        </>
+    );
 }
