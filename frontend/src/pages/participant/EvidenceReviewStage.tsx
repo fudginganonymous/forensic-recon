@@ -15,8 +15,8 @@ interface Props {
 }
 
 function getFileUrl(filePath: string) {
-    const filename = filePath.split(/[\\/]/).pop();
-    return `${API_BASE}/uploads/${filename}`;
+    const cleanPath = filePath.replace(/^\.?\//, "");
+    return `${API_BASE}/${cleanPath}`;
 }
 
 function isImage(filePath: string) {

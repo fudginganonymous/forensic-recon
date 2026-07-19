@@ -30,8 +30,11 @@ export default function EvidenceSidebar({ evidenceItems }: Props) {
     function getFileUrl(filePath: string) {
         // filePath is stored as a server-side path like ./uploads/case_1/photo.jpg
         // Serve via a static files endpoint — see backend fix below
-        const filename = filePath.split(/[\\/]/).pop();
-        return `${API_BASE}/uploads/${filename}`;
+    } {
+        const cleanPath = filePath.replace(/^\.?\//, "");
+        return `${API_BASE}/${cleanPath}`;
+
+
     }
 
     function isImage(filePath: string) {

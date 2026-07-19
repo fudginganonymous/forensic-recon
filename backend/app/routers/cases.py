@@ -111,7 +111,7 @@ def add_evidence_item(
         dest_path = os.path.join(case_dir, file.filename)
         with open(dest_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-        file_path = dest_path
+        file_path = f"/uploads/case_{case_id}/{file.filename}"
 
     item = EvidenceItem(
         case_id=case_id,
@@ -160,7 +160,7 @@ def edit_evidence_item(
         dest_path = os.path.join(case_dir, file.filename)
         with open(dest_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-        item.file_path = dest_path
+        item.file_path = f"/uploads/case_{case_id}/{file.filename}"
 
     db.commit()
     db.refresh(item)
