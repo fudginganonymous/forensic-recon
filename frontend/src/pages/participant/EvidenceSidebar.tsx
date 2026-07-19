@@ -28,8 +28,14 @@ export default function EvidenceSidebar({ evidenceItems }: Props) {
     }
 
     function getFileUrl(filePath: string): string {
-        const cleanPath = filePath.replace(/^\.?\//, "");
-        return `${API_BASE}/${cleanPath}`;
+        // If already a full URL (e.g. Cloudinary), use directly
+        if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
+            return filePath;
+        }
+        // Extract just the filename from whatever path is stored
+        // e.g. ./uploads/case_1/photo.jpg → photo.jpg
+        const filename = filePath.split(/[/\\]/).pop() ?? filePath;
+        return `${API_BASE}/uploads/${filename}`;
     }
 
     function isImage(filePath: string) {
