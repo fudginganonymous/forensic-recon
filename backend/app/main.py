@@ -7,6 +7,8 @@ On startup, creates all database tables if they do not yet exist
 (suitable for the SQLite research prototype; for PostgreSQL in
 production, prefer Alembic migrations - see /alembic).
 """
+from fastapi.staticfiles import StaticFiles
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -32,6 +34,10 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    # Serve uploaded evidence files as static assets
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR),
+              name="uploads")
 )
 
 

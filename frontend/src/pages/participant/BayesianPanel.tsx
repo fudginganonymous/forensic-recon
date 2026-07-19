@@ -62,10 +62,17 @@ export default function BayesianPanel({ session }: Props) {
         <h3 className="font-medium text-indigo-900">Optional: Bayesian decision-support</h3>
         <span className="text-xs text-indigo-500">Not required to proceed</span>
       </div>
+      <p className="text-sm text-indigo-700 mb-2">
+        The researcher has enabled optional Bayesian decision support for this case.
+        This tool computes a posterior probability for each hypothesis based on likelihood
+        ratios you can assign when evaluating evidence in Stage 4.
+      </p>
       <p className="text-sm text-indigo-700 mb-3">
-        This tool computes a posterior probability for each hypothesis based on the
-        likelihood ratios you entered during evidence evaluation. Use it as an additional
-        aid alongside your own judgement.
+        <strong>How to use it:</strong> In Stage 4 (Evidence Evaluation), enter a likelihood
+        ratio alongside each stance you assign. A ratio above 1 means the evidence favours
+        that hypothesis; below 1 means it counts against it; 1 means no effect. Then return
+        here and click "Compute posterior" to see the updated probability. Using this tool
+        is entirely optional — you can complete the reconstruction without it.
       </p>
       <ErrorMessage message={error} />
       <div className="space-y-3">
