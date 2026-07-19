@@ -105,7 +105,6 @@ export default function EvidenceSidebar({ evidenceItems }: Props) {
                                                             📎 Open attached file
                                                         </a>
                                                     )}
-                                            )}
                                                 </div>
                                             )}
                                         </div>
