@@ -27,14 +27,9 @@ export default function EvidenceSidebar({ evidenceItems }: Props) {
         setZoom(1);
     }
 
-    function getFileUrl(filePath: string) {
-        // filePath is stored as a server-side path like ./uploads/case_1/photo.jpg
-        // Serve via a static files endpoint — see backend fix below
-    } {
+    function getFileUrl(filePath: string): string {
         const cleanPath = filePath.replace(/^\.?\//, "");
         return `${API_BASE}/${cleanPath}`;
-
-
     }
 
     function isImage(filePath: string) {
