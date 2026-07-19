@@ -34,10 +34,16 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    # Serve uploaded evidence files as static assets
-    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-    app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR),
-              name="uploads")
+)
+
+# Create uploads directory if it doesn't exist
+os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+
+# Serve uploaded files
+app.mount(
+    "/uploads",
+    StaticFiles(directory=settings.UPLOAD_DIR),
+    name="uploads",
 )
 
 
