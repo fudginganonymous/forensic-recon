@@ -7,6 +7,7 @@ On startup, creates all database tables if they do not yet exist
 (suitable for the SQLite research prototype; for PostgreSQL in
 production, prefer Alembic migrations - see /alembic).
 """
+from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 import os
 from fastapi import FastAPI
@@ -16,19 +17,6 @@ from app.core.config import settings
 from app.db.session import engine, Base
 from app.models import *  # noqa: F401,F403 - ensures all models are registered with Base
 from app.routers import auth, cases, sessions, bayesian, researcher
-from pathlib import Path
-
-
-@app.get("/debug/uploads")
-def debug_uploads():
-    p = Path(settings.UPLOAD_DIR)
-
-    return {
-        "upload_dir": str(p.resolve()),
-        "exists": p.exists(),
-        "files": [str(f) for f in p.rglob("*")]
-    }
-
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -58,6 +46,16 @@ app.mount(
     StaticFiles(directory=settings.UPLOAD_DIR),
     name="uploads",
 )
+
+
+@app.get("/debug/uploads")
+def debug_uploads():
+    p = Path(settings.UPLOAD_DIR)
+    return {
+        "upload_dir": str(p.resolve()),
+        "exists": p.exists(),
+        "files": [str(f) for f in p.rglob("*")],
+    }
 
 
 @app.on_event("startup")
