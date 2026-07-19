@@ -14,7 +14,7 @@ interface Props {
     onAdvance: () => Promise<void>;
 }
 
-function getFileUrl(filePath: string) {
+function getFileUrl(filePath: string): string {
     const cleanPath = filePath.replace(/^\.?\//, "");
     return `${API_BASE}/${cleanPath}`;
 }
