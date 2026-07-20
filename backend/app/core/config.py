@@ -48,12 +48,19 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5173",
     ]
 
-    # --- File uploads (evidence files) ---
-    UPLOAD_DIR: str = "./uploads"
-    MAX_UPLOAD_SIZE_MB: int = 25
 
-    class Config:
-        env_file = ".env"
+    # --- File uploads ---
+UPLOAD_DIR: str = "./uploads"
+MAX_UPLOAD_SIZE_MB: int = 25
+
+# --- Cloudinary (for persistent file storage on Render) ---
+CLOUDINARY_CLOUD_NAME: str = ""
+CLOUDINARY_API_KEY: str = ""
+CLOUDINARY_API_SECRET: str = ""
+
+
+class Config:
+    env_file = ".env"
 
 
 settings = Settings()

@@ -104,14 +104,11 @@ def add_evidence_item(
         raise HTTPException(status_code=404, detail="Case not found")
 
     file_path = None
-    if file is not None:
-        os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-        case_dir = os.path.join(settings.UPLOAD_DIR, f"case_{case_id}")
-        os.makedirs(case_dir, exist_ok=True)
-        dest_path = os.path.join(case_dir, file.filename)
-        with open(dest_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        file_path = f"/uploads/case_{case_id}/{file.filename}"
+
+
+if file is not None:
+    from app.services.storage import save_upload
+    file_path = save_upload(file.file, file.filename, case_id)
 
     item = EvidenceItem(
         case_id=case_id,
@@ -153,14 +150,12 @@ def edit_evidence_item(
     if is_contradictory_by_design is not None:
         item.is_contradictory_by_design = is_contradictory_by_design
 
-    if file is not None:
-        os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-        case_dir = os.path.join(settings.UPLOAD_DIR, f"case_{case_id}")
-        os.makedirs(case_dir, exist_ok=True)
-        dest_path = os.path.join(case_dir, file.filename)
-        with open(dest_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        item.file_path = f"/uploads/case_{case_id}/{file.filename}"
+    file_path = None
+
+
+if file is not None:
+    from app.services.storage import save_upload
+    item.file_path = save_upload(file.file, file.filename, case_id)
 
     db.commit()
     db.refresh(item)

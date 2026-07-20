@@ -14,14 +14,13 @@ interface Props {
     onAdvance: () => Promise<void>;
 }
 
-function getFileUrl(filePath: string): string {
-    // If already a full URL (e.g. Cloudinary), use directly
+function getFileUrl(filePath: string) {
+    // If already a full URL (Cloudinary), use it directly
     if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
         return filePath;
     }
-    // Extract just the filename from whatever path is stored
-    // e.g. ./uploads/case_1/photo.jpg → photo.jpg
-    const filename = filePath.split(/[/\\]/).pop() ?? filePath;
+    // Local fallback
+    const filename = filePath.split(/[\\/]/).pop();
     return `${API_BASE}/uploads/${filename}`;
 }
 
