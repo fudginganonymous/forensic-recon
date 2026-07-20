@@ -14,8 +14,6 @@ class Settings(BaseSettings):
     ENV: str = "development"
 
     # --- Database ---
-    # SQLite for local research deployment. To upgrade:
-    # DATABASE_URL=postgresql+psycopg2://user:pass@host:5432/dbname
     DATABASE_URL: str = "sqlite:///./forensic_recon.db"
 
     @field_validator("DATABASE_URL")
@@ -38,9 +36,13 @@ class Settings(BaseSettings):
         "https://forensic-reconstruction-study.netlify.app"
     ]
 
+    # --- Auth / JWT ---
+    SECRET_KEY: str = "supersecretkey"  # Replace in production
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+
     class Config:
         env_file = ".env"
 
 
-# Instantiate settings
 settings = Settings()
