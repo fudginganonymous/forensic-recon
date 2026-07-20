@@ -38,3 +38,6 @@ class Settings(BaseSettings):
     class Config:
         # Allows loading environment variables from a .env file locally
         env_file = ".env"
+
+
+settings = Settings()
