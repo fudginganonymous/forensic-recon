@@ -120,7 +120,7 @@ if file is not None:
     db.add(item)
     db.commit()
     db.refresh(item)
-    return item
+    return (item)
 
 
 @router.patch("/{case_id}/evidence/{evidence_id}", response_model=EvidenceItemOut)
