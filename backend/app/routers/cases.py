@@ -105,10 +105,9 @@ def add_evidence_item(
 
     file_path = None
 
-
-if file is not None:
-    from app.services.storage import save_upload
-    file_path = save_upload(file.file, file.filename, case_id)
+    if file is not None:
+        from app.services.storage import save_upload
+        file_path = save_upload(file.file, file.filename, case_id)
 
     item = EvidenceItem(
         case_id=case_id,
@@ -120,7 +119,7 @@ if file is not None:
     db.add(item)
     db.commit()
     db.refresh(item)
-    return (item)
+    return item
 
 
 @router.patch("/{case_id}/evidence/{evidence_id}", response_model=EvidenceItemOut)
@@ -152,10 +151,9 @@ def edit_evidence_item(
 
     file_path = None
 
-
-if file is not None:
-    from app.services.storage import save_upload
-    item.file_path = save_upload(file.file, file.filename, case_id)
+    if file is not None:
+        from app.services.storage import save_upload
+        item.file_path = save_upload(file.file, file.filename, case_id)
 
     db.commit()
     db.refresh(item)
