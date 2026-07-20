@@ -20,24 +20,27 @@ class Settings(BaseSettings):
 
     @field_validator("DATABASE_URL")
     def validate_db_url(cls, v):
-        # Prevent accidental use of deprecated postgres:// scheme
         if v.startswith("postgres://"):
             raise ValueError("Use postgresql+psycopg2:// for SQLAlchemy")
         return v
 
     # --- Cloudinary ---
-    # These are optional. If provided, Cloudinary will be used for file storage.
     CLOUDINARY_CLOUD_NAME: str | None = None
     CLOUDINARY_API_KEY: str | None = None
     CLOUDINARY_API_SECRET: str | None = None
 
     # --- Local fallback storage ---
-    # Used only when Cloudinary credentials are not provided.
     UPLOAD_DIR: str = "./uploads"
 
+    # --- CORS ---
+    FRONTEND_ORIGINS: list[str] = [
+        "http://localhost:5173",
+        "https://forensic-reconstruction-study.netlify.app"
+    ]
+
     class Config:
-        # Allows loading environment variables from a .env file locally
         env_file = ".env"
 
 
+# Instantiate settings
 settings = Settings()
