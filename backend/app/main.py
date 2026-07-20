@@ -32,7 +32,7 @@ app.add_middleware(
 def on_startup():
     Base.metadata.create_all(bind=engine)
     # Ensure uploads directory exists
-    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+   # os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 
 
 # ── Routers ───────────────────────────────────────────────────────────────────
@@ -46,9 +46,9 @@ app.include_router(researcher.router)
 # ── Static file serving — MUST come after routers ────────────────────────────
 # Mounted last so it does not intercept API routes.
 # Files are served publicly (no auth) so participants can view evidence images.
-_upload_dir = os.path.abspath(settings.UPLOAD_DIR)
-os.makedirs(_upload_dir, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=_upload_dir), name="uploads")
+# _upload_dir = os.path.abspath(settings.UPLOAD_DIR)
+# os.makedirs(_upload_dir, exist_ok=True)
+# app.mount("/uploads", StaticFiles(directory=_upload_dir), name="uploads")
 
 
 @app.get("/", tags=["Health"])
