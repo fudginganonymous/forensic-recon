@@ -1,30 +1,20 @@
 """
 FastAPI application entrypoint.
-
-Run with: uvicorn app.main:app --reload --port 8000
-
-On startup, creates all database tables if they do not yet exist
-(suitable for the SQLite research prototype; for PostgreSQL in
-production, prefer Alembic migrations - see /alembic).
 """
-from pathlib import Path
-from fastapi.staticfiles import StaticFiles
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.db.session import engine, Base
-from app.models import *  # noqa: F401,F403 - ensures all models are registered with Base
+from app.models import *  # noqa: F401,F403
 from app.routers import auth, cases, sessions, bayesian, researcher
 
 app = FastAPI(
     title=settings.APP_NAME,
     description=(
-        "API for a structured digital crime scene reconstruction workflow, "
-        "with automated capture of hypothesis flexibility, premature closure, "
-        "and confidence calibration metrics. Includes an optional, fully "
-        "independent Bayesian reasoning module."
+        "API for a structured digital crime scene reconstruction workflow."
     ),
     version="1.0.0",
 )
@@ -37,37 +27,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create uploads directory if it doesn't exist
-os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-
-# Serve uploaded files
-app.mount(
-    "/uploads",
-    StaticFiles(directory=settings.UPLOAD_DIR),
-    name="uploads",
-)
-
-
-@app.get("/debug/uploads")
-def debug_uploads():
-    p = Path(settings.UPLOAD_DIR)
-    return {
-        "upload_dir": str(p.resolve()),
-        "exists": p.exists(),
-        "files": [str(f) for f in p.rglob("*")],
-    }
-
 
 @app.on_event("startup")
 def on_startup():
     Base.metadata.create_all(bind=engine)
+    # Ensure uploads directory exists
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 
 
+# ── Routers ───────────────────────────────────────────────────────────────────
 app.include_router(auth.router)
 app.include_router(cases.router)
 app.include_router(sessions.router)
 app.include_router(bayesian.router)
 app.include_router(researcher.router)
+
+
+# ── Static file serving — MUST come after routers ────────────────────────────
+# Mounted last so it does not intercept API routes.
+# Files are served publicly (no auth) so participants can view evidence images.
+_upload_dir = os.path.abspath(settings.UPLOAD_DIR)
+os.makedirs(_upload_dir, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=_upload_dir), name="uploads")
 
 
 @app.get("/", tags=["Health"])
