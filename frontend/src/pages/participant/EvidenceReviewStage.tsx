@@ -15,14 +15,13 @@ interface Props {
 }
 
 function getFileUrl(filePath: string) {
-    // If already a full URL (Cloudinary), use it directly
-    if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
-        return filePath;
-    }
-    // Local fallback
-    const filename = filePath.split(/[\\/]/).pop();
-    return `${API_BASE}/uploads/${filename}`;
+    return filePath; // Cloudinary URL already complete
 }
+
+function isImage(filePath: string) {
+    return /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(filePath);
+}
+
 
 function isImage(filePath: string) {
     return /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(filePath);
