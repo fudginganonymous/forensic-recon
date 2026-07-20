@@ -7,8 +7,6 @@ import { useState } from "react";
 import type { EvidenceItem } from "../../api/types";
 import { Button, Card } from "../../components/ui";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
-
 interface Props {
     evidenceItems: EvidenceItem[];
     onAdvance: () => Promise<void>;
@@ -17,11 +15,6 @@ interface Props {
 function getFileUrl(filePath: string) {
     return filePath; // Cloudinary URL already complete
 }
-
-function isImage(filePath: string) {
-    return /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(filePath);
-}
-
 
 function isImage(filePath: string) {
     return /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(filePath);
