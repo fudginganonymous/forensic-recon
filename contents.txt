@@ -1,0 +1,2017 @@
+--
+-- PostgreSQL database dump
+--
+
+\restrict vc0TpUPTqBkMeYU0aSzLg1Urc5PhYPdKCxhjUCW0nKPBQc8LiLkSRWV9tVjRcO1
+
+-- Dumped from database version 18.4 (Debian 18.4-1.pgdg12+1)
+-- Dumped by pg_dump version 18.4
+
+BEGIN;
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: forensic_recon_db_tobo_user
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+ALTER SCHEMA public OWNER TO forensic_recon_db_tobo_user;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: activity_logs; Type: TABLE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE TABLE public.activity_logs (
+    id integer NOT NULL,
+    session_id integer NOT NULL,
+    event_type character varying NOT NULL,
+    event_data text,
+    stage_at_event integer NOT NULL,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.activity_logs OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: activity_logs_id_seq; Type: SEQUENCE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE SEQUENCE public.activity_logs_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.activity_logs_id_seq OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: activity_logs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER SEQUENCE public.activity_logs_id_seq OWNED BY public.activity_logs.id;
+
+
+--
+-- Name: alternative_acknowledgements; Type: TABLE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE TABLE public.alternative_acknowledgements (
+    id integer NOT NULL,
+    session_id integer NOT NULL,
+    item_type character varying NOT NULL,
+    hypothesis_id integer,
+    evidence_item_id integer,
+    acknowledged boolean NOT NULL,
+    acknowledged_at timestamp with time zone,
+    reflection_note character varying,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.alternative_acknowledgements OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: alternative_acknowledgements_id_seq; Type: SEQUENCE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE SEQUENCE public.alternative_acknowledgements_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.alternative_acknowledgements_id_seq OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: alternative_acknowledgements_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER SEQUENCE public.alternative_acknowledgements_id_seq OWNED BY public.alternative_acknowledgements.id;
+
+
+--
+-- Name: bayesian_updates; Type: TABLE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE TABLE public.bayesian_updates (
+    id integer NOT NULL,
+    hypothesis_id integer NOT NULL,
+    prior_probability double precision NOT NULL,
+    posterior_probability double precision NOT NULL,
+    evidence_considered text NOT NULL,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.bayesian_updates OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: bayesian_updates_id_seq; Type: SEQUENCE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE SEQUENCE public.bayesian_updates_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.bayesian_updates_id_seq OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: bayesian_updates_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER SEQUENCE public.bayesian_updates_id_seq OWNED BY public.bayesian_updates.id;
+
+
+--
+-- Name: cases; Type: TABLE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE TABLE public.cases (
+    id integer NOT NULL,
+    title character varying NOT NULL,
+    description text,
+    bayesian_enabled boolean NOT NULL,
+    ground_truth_summary text,
+    created_by integer NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    is_active boolean
+);
+
+
+ALTER TABLE public.cases OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: cases_id_seq; Type: SEQUENCE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE SEQUENCE public.cases_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.cases_id_seq OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: cases_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER SEQUENCE public.cases_id_seq OWNED BY public.cases.id;
+
+
+--
+-- Name: evidence_hypothesis_links; Type: TABLE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE TABLE public.evidence_hypothesis_links (
+    id integer NOT NULL,
+    session_id integer NOT NULL,
+    evidence_item_id integer NOT NULL,
+    hypothesis_id integer NOT NULL,
+    stance character varying NOT NULL,
+    stance_value double precision NOT NULL,
+    likelihood_ratio double precision,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone
+);
+
+
+ALTER TABLE public.evidence_hypothesis_links OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: evidence_hypothesis_links_id_seq; Type: SEQUENCE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE SEQUENCE public.evidence_hypothesis_links_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.evidence_hypothesis_links_id_seq OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: evidence_hypothesis_links_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER SEQUENCE public.evidence_hypothesis_links_id_seq OWNED BY public.evidence_hypothesis_links.id;
+
+
+--
+-- Name: evidence_items; Type: TABLE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE TABLE public.evidence_items (
+    id integer NOT NULL,
+    case_id integer NOT NULL,
+    label character varying NOT NULL,
+    description text NOT NULL,
+    file_path character varying,
+    is_contradictory_by_design boolean,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.evidence_items OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: evidence_items_id_seq; Type: SEQUENCE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE SEQUENCE public.evidence_items_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.evidence_items_id_seq OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: evidence_items_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER SEQUENCE public.evidence_items_id_seq OWNED BY public.evidence_items.id;
+
+
+--
+-- Name: final_reconstructions; Type: TABLE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE TABLE public.final_reconstructions (
+    id integer NOT NULL,
+    session_id integer NOT NULL,
+    selected_hypothesis_id integer NOT NULL,
+    final_narrative text NOT NULL,
+    final_confidence double precision NOT NULL,
+    accuracy_score double precision,
+    scored_by integer,
+    scored_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.final_reconstructions OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: final_reconstructions_id_seq; Type: SEQUENCE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE SEQUENCE public.final_reconstructions_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.final_reconstructions_id_seq OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: final_reconstructions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER SEQUENCE public.final_reconstructions_id_seq OWNED BY public.final_reconstructions.id;
+
+
+--
+-- Name: hypotheses; Type: TABLE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE TABLE public.hypotheses (
+    id integer NOT NULL,
+    session_id integer NOT NULL,
+    title character varying NOT NULL,
+    description text NOT NULL,
+    initial_confidence double precision NOT NULL,
+    current_confidence double precision NOT NULL,
+    abandoned_at timestamp with time zone,
+    is_retained_at_final boolean,
+    bayesian_prior double precision,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.hypotheses OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: hypotheses_id_seq; Type: SEQUENCE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE SEQUENCE public.hypotheses_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.hypotheses_id_seq OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: hypotheses_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER SEQUENCE public.hypotheses_id_seq OWNED BY public.hypotheses.id;
+
+
+--
+-- Name: hypothesis_revisions; Type: TABLE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE TABLE public.hypothesis_revisions (
+    id integer NOT NULL,
+    hypothesis_id integer NOT NULL,
+    previous_confidence double precision NOT NULL,
+    new_confidence double precision NOT NULL,
+    rationale text,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.hypothesis_revisions OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: hypothesis_revisions_id_seq; Type: SEQUENCE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE SEQUENCE public.hypothesis_revisions_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.hypothesis_revisions_id_seq OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: hypothesis_revisions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER SEQUENCE public.hypothesis_revisions_id_seq OWNED BY public.hypothesis_revisions.id;
+
+
+--
+-- Name: observations; Type: TABLE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE TABLE public.observations (
+    id integer NOT NULL,
+    session_id integer NOT NULL,
+    observation_text text NOT NULL,
+    source character varying NOT NULL,
+    observed_timestamp timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.observations OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: observations_id_seq; Type: SEQUENCE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE SEQUENCE public.observations_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.observations_id_seq OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: observations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER SEQUENCE public.observations_id_seq OWNED BY public.observations.id;
+
+
+--
+-- Name: reconstruction_sessions; Type: TABLE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE TABLE public.reconstruction_sessions (
+    id integer NOT NULL,
+    participant_id integer NOT NULL,
+    case_id integer NOT NULL,
+    current_stage integer NOT NULL,
+    started_at timestamp with time zone DEFAULT now(),
+    completed_at timestamp with time zone,
+    first_preferred_hypothesis_at timestamp with time zone,
+    bayesian_enabled_snapshot boolean
+);
+
+
+ALTER TABLE public.reconstruction_sessions OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: reconstruction_sessions_id_seq; Type: SEQUENCE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE SEQUENCE public.reconstruction_sessions_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.reconstruction_sessions_id_seq OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: reconstruction_sessions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER SEQUENCE public.reconstruction_sessions_id_seq OWNED BY public.reconstruction_sessions.id;
+
+
+--
+-- Name: session_metrics; Type: TABLE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE TABLE public.session_metrics (
+    id integer NOT NULL,
+    session_id integer NOT NULL,
+    num_hypotheses_generated integer,
+    num_hypothesis_revisions integer,
+    num_evidence_hypothesis_links integer,
+    num_alternatives_retained_at_final integer,
+    num_contradictory_acknowledgements integer,
+    hypothesis_flexibility_score double precision,
+    time_to_first_preferred_hypothesis_seconds double precision,
+    num_hypotheses_abandoned_early integer,
+    num_contradictory_evidence_ignored integer,
+    num_evidence_reviewed_before_final integer,
+    premature_closure_score double precision,
+    initial_confidence_of_selected double precision,
+    final_confidence double precision,
+    final_accuracy double precision,
+    calibration_error double precision,
+    computed_at timestamp with time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.session_metrics OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: session_metrics_id_seq; Type: SEQUENCE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE SEQUENCE public.session_metrics_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.session_metrics_id_seq OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: session_metrics_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER SEQUENCE public.session_metrics_id_seq OWNED BY public.session_metrics.id;
+
+
+--
+-- Name: users; Type: TABLE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE TABLE public.users (
+    id integer NOT NULL,
+    username character varying NOT NULL,
+    email character varying,
+    hashed_password character varying NOT NULL,
+    role character varying NOT NULL,
+    is_active boolean,
+    has_consented boolean NOT NULL,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.users OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE SEQUENCE public.users_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.users_id_seq OWNER TO forensic_recon_db_tobo_user;
+
+--
+-- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
+
+
+--
+-- Name: activity_logs id; Type: DEFAULT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.activity_logs ALTER COLUMN id SET DEFAULT nextval('public.activity_logs_id_seq'::regclass);
+
+
+--
+-- Name: alternative_acknowledgements id; Type: DEFAULT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.alternative_acknowledgements ALTER COLUMN id SET DEFAULT nextval('public.alternative_acknowledgements_id_seq'::regclass);
+
+
+--
+-- Name: bayesian_updates id; Type: DEFAULT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.bayesian_updates ALTER COLUMN id SET DEFAULT nextval('public.bayesian_updates_id_seq'::regclass);
+
+
+--
+-- Name: cases id; Type: DEFAULT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.cases ALTER COLUMN id SET DEFAULT nextval('public.cases_id_seq'::regclass);
+
+
+--
+-- Name: evidence_hypothesis_links id; Type: DEFAULT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.evidence_hypothesis_links ALTER COLUMN id SET DEFAULT nextval('public.evidence_hypothesis_links_id_seq'::regclass);
+
+
+--
+-- Name: evidence_items id; Type: DEFAULT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.evidence_items ALTER COLUMN id SET DEFAULT nextval('public.evidence_items_id_seq'::regclass);
+
+
+--
+-- Name: final_reconstructions id; Type: DEFAULT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.final_reconstructions ALTER COLUMN id SET DEFAULT nextval('public.final_reconstructions_id_seq'::regclass);
+
+
+--
+-- Name: hypotheses id; Type: DEFAULT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.hypotheses ALTER COLUMN id SET DEFAULT nextval('public.hypotheses_id_seq'::regclass);
+
+
+--
+-- Name: hypothesis_revisions id; Type: DEFAULT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.hypothesis_revisions ALTER COLUMN id SET DEFAULT nextval('public.hypothesis_revisions_id_seq'::regclass);
+
+
+--
+-- Name: observations id; Type: DEFAULT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.observations ALTER COLUMN id SET DEFAULT nextval('public.observations_id_seq'::regclass);
+
+
+--
+-- Name: reconstruction_sessions id; Type: DEFAULT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.reconstruction_sessions ALTER COLUMN id SET DEFAULT nextval('public.reconstruction_sessions_id_seq'::regclass);
+
+
+--
+-- Name: session_metrics id; Type: DEFAULT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.session_metrics ALTER COLUMN id SET DEFAULT nextval('public.session_metrics_id_seq'::regclass);
+
+
+--
+-- Name: users id; Type: DEFAULT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+
+
+--
+-- Data for Name: activity_logs; Type: TABLE DATA; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+COPY public.activity_logs (id, session_id, event_type, event_data, stage_at_event, created_at) FROM stdin;
+1	1	session_started	{"case_id": 1}	1	2026-06-28 20:56:17.531025+00
+2	1	observation_created	{"observation_id": 1}	1	2026-06-28 20:57:28.84217+00
+3	1	stage_advanced	{"to_stage": 2}	2	2026-06-28 20:57:33.57844+00
+4	1	stage_advanced	{"to_stage": 3}	3	2026-06-28 20:57:52.473033+00
+5	1	hypothesis_created	{"hypothesis_id": 1, "initial_confidence": 50.0}	3	2026-06-28 20:58:23.262168+00
+6	1	hypothesis_created	{"hypothesis_id": 2, "initial_confidence": 50.0}	3	2026-06-28 20:58:37.24551+00
+7	1	hypothesis_created	{"hypothesis_id": 3, "initial_confidence": 50.0}	3	2026-06-28 20:59:06.156028+00
+8	1	stage_advanced	{"to_stage": 4}	4	2026-06-28 20:59:20.625152+00
+9	2	session_started	{"case_id": 1}	1	2026-06-30 12:54:18.092684+00
+10	3	session_started	{"case_id": 1}	1	2026-07-13 15:34:03.251952+00
+11	3	observation_created	{"observation_id": 2}	1	2026-07-13 18:46:26.859806+00
+12	3	observation_created	{"observation_id": 3}	1	2026-07-13 19:03:55.173117+00
+13	3	observation_created	{"observation_id": 4}	1	2026-07-13 19:04:15.683807+00
+14	3	observation_created	{"observation_id": 5}	1	2026-07-13 19:04:48.737891+00
+15	3	observation_created	{"observation_id": 6}	1	2026-07-13 19:06:20.596253+00
+16	3	stage_advanced	{"to_stage": 2}	2	2026-07-13 19:07:19.313155+00
+17	3	stage_advanced	{"to_stage": 3}	3	2026-07-13 19:07:37.106933+00
+18	3	hypothesis_created	{"hypothesis_id": 4, "initial_confidence": 50.0}	3	2026-07-13 19:11:14.849645+00
+19	3	hypothesis_revised	{"hypothesis_id": 4, "previous_confidence": 50.0, "new_confidence": 70.0}	3	2026-07-13 19:11:25.022411+00
+20	3	hypothesis_revised	{"hypothesis_id": 4, "previous_confidence": 70.0, "new_confidence": 62.0}	3	2026-07-13 19:12:54.84748+00
+21	3	hypothesis_created	{"hypothesis_id": 5, "initial_confidence": 47.0}	3	2026-07-13 19:12:58.645888+00
+22	3	hypothesis_became_preferred	{"hypothesis_id": 4}	3	2026-07-13 19:12:58.656825+00
+23	3	stage_advanced	{"to_stage": 4}	4	2026-07-13 19:13:03.556372+00
+24	3	evidence_link_created	{"evidence_item_id": 1, "hypothesis_id": 4, "stance": "neutral"}	4	2026-07-13 19:52:19.902191+00
+25	3	evidence_link_created	{"evidence_item_id": 1, "hypothesis_id": 5, "stance": "neutral"}	4	2026-07-13 19:52:19.926807+00
+26	3	evidence_link_updated	{"evidence_item_id": 1, "hypothesis_id": 5, "stance": "neutral"}	4	2026-07-13 19:53:03.879479+00
+27	3	evidence_link_created	{"evidence_item_id": 2, "hypothesis_id": 4, "stance": "neutral"}	4	2026-07-13 19:53:29.070323+00
+28	3	evidence_link_updated	{"evidence_item_id": 2, "hypothesis_id": 4, "stance": "neutral"}	4	2026-07-13 19:53:30.029866+00
+29	3	evidence_link_created	{"evidence_item_id": 2, "hypothesis_id": 5, "stance": "neutral"}	4	2026-07-13 19:53:31.392639+00
+30	3	evidence_link_updated	{"evidence_item_id": 2, "hypothesis_id": 5, "stance": "neutral"}	4	2026-07-13 19:53:32.046012+00
+31	3	evidence_link_updated	{"evidence_item_id": 2, "hypothesis_id": 5, "stance": "neutral"}	4	2026-07-13 19:53:37.934955+00
+32	3	evidence_link_updated	{"evidence_item_id": 2, "hypothesis_id": 4, "stance": "neutral"}	4	2026-07-13 19:55:47.147958+00
+33	3	evidence_link_created	{"evidence_item_id": 3, "hypothesis_id": 4, "stance": "weakly_contradicts"}	4	2026-07-13 19:55:53.648235+00
+34	3	evidence_link_created	{"evidence_item_id": 3, "hypothesis_id": 5, "stance": "weakly_contradicts"}	4	2026-07-13 19:55:56.233659+00
+35	3	evidence_link_updated	{"evidence_item_id": 3, "hypothesis_id": 4, "stance": "weakly_contradicts"}	4	2026-07-13 19:56:02.698337+00
+36	3	evidence_link_updated	{"evidence_item_id": 3, "hypothesis_id": 5, "stance": "weakly_contradicts"}	4	2026-07-13 19:56:07.879535+00
+37	3	evidence_link_created	{"evidence_item_id": 4, "hypothesis_id": 4, "stance": "weakly_supports"}	4	2026-07-13 19:56:08.0144+00
+38	3	evidence_link_updated	{"evidence_item_id": 4, "hypothesis_id": 4, "stance": "weakly_supports"}	4	2026-07-13 19:56:12.994456+00
+39	3	evidence_link_created	{"evidence_item_id": 4, "hypothesis_id": 5, "stance": "neutral"}	4	2026-07-13 19:56:15.802654+00
+40	3	evidence_link_updated	{"evidence_item_id": 4, "hypothesis_id": 5, "stance": "neutral"}	4	2026-07-13 19:56:16.765778+00
+41	3	evidence_link_created	{"evidence_item_id": 5, "hypothesis_id": 4, "stance": "neutral"}	4	2026-07-13 20:02:38.161022+00
+42	3	evidence_link_updated	{"evidence_item_id": 5, "hypothesis_id": 4, "stance": "neutral"}	4	2026-07-13 20:02:38.955878+00
+43	3	evidence_link_updated	{"evidence_item_id": 5, "hypothesis_id": 4, "stance": "neutral"}	4	2026-07-13 20:03:02.39804+00
+44	3	evidence_link_created	{"evidence_item_id": 5, "hypothesis_id": 5, "stance": "neutral"}	4	2026-07-13 20:03:02.500972+00
+45	3	evidence_link_updated	{"evidence_item_id": 5, "hypothesis_id": 5, "stance": "neutral"}	4	2026-07-13 20:03:03.307844+00
+46	3	evidence_link_created	{"evidence_item_id": 6, "hypothesis_id": 4, "stance": "neutral"}	4	2026-07-13 20:05:07.368513+00
+47	3	evidence_link_updated	{"evidence_item_id": 6, "hypothesis_id": 4, "stance": "weakly_supports"}	4	2026-07-13 20:05:10.412201+00
+48	3	evidence_link_created	{"evidence_item_id": 6, "hypothesis_id": 5, "stance": "neutral"}	4	2026-07-13 20:05:11.870306+00
+49	4	session_started	{"case_id": 1}	1	2026-07-14 12:04:25.284543+00
+50	4	observation_created	{"observation_id": 7}	1	2026-07-14 12:21:18.614313+00
+51	4	observation_created	{"observation_id": 8}	1	2026-07-14 12:23:31.272405+00
+52	4	observation_created	{"observation_id": 9}	1	2026-07-14 12:24:10.701988+00
+53	4	observation_created	{"observation_id": 10}	1	2026-07-14 12:24:57.586534+00
+54	4	observation_created	{"observation_id": 11}	1	2026-07-14 12:27:58.935302+00
+55	4	observation_created	{"observation_id": 12}	1	2026-07-14 12:28:36.663209+00
+56	4	stage_advanced	{"to_stage": 2}	2	2026-07-14 12:28:42.038475+00
+57	4	stage_advanced	{"to_stage": 3}	3	2026-07-14 12:31:10.296415+00
+58	4	hypothesis_created	{"hypothesis_id": 6, "initial_confidence": 90.0}	3	2026-07-14 12:41:28.717665+00
+59	4	hypothesis_created	{"hypothesis_id": 7, "initial_confidence": 20.0}	3	2026-07-14 12:51:55.870258+00
+60	4	hypothesis_became_preferred	{"hypothesis_id": 6}	3	2026-07-14 12:51:55.881381+00
+61	4	stage_advanced	{"to_stage": 4}	4	2026-07-14 12:51:59.872132+00
+62	4	evidence_link_created	{"evidence_item_id": 1, "hypothesis_id": 6, "stance": "supports"}	4	2026-07-14 12:53:27.617896+00
+63	4	evidence_link_updated	{"evidence_item_id": 1, "hypothesis_id": 6, "stance": "supports"}	4	2026-07-14 12:53:28.256362+00
+64	4	evidence_link_created	{"evidence_item_id": 1, "hypothesis_id": 7, "stance": "weakly_supports"}	4	2026-07-14 12:53:46.307864+00
+65	4	evidence_link_created	{"evidence_item_id": 2, "hypothesis_id": 6, "stance": "supports"}	4	2026-07-14 12:54:00.691181+00
+66	4	evidence_link_created	{"evidence_item_id": 2, "hypothesis_id": 7, "stance": "supports"}	4	2026-07-14 12:54:05.002464+00
+67	4	evidence_link_created	{"evidence_item_id": 3, "hypothesis_id": 6, "stance": "contradicts"}	4	2026-07-14 12:54:13.931648+00
+68	4	evidence_link_created	{"evidence_item_id": 3, "hypothesis_id": 7, "stance": "neutral"}	4	2026-07-14 12:54:20.905983+00
+158	14	stage_advanced	{"to_stage": 2}	2	2026-07-20 14:28:03.581358+00
+69	4	evidence_link_updated	{"evidence_item_id": 3, "hypothesis_id": 7, "stance": "neutral"}	4	2026-07-14 12:54:22.447603+00
+71	4	evidence_link_created	{"evidence_item_id": 4, "hypothesis_id": 6, "stance": "weakly_supports"}	4	2026-07-14 12:54:35.928967+00
+73	4	evidence_link_created	{"evidence_item_id": 5, "hypothesis_id": 6, "stance": "supports"}	4	2026-07-14 12:54:43.463156+00
+75	4	evidence_link_created	{"evidence_item_id": 6, "hypothesis_id": 6, "stance": "supports"}	4	2026-07-14 12:54:54.606689+00
+77	4	evidence_link_updated	{"evidence_item_id": 6, "hypothesis_id": 7, "stance": "weakly_contradicts"}	4	2026-07-14 12:54:59.71384+00
+79	4	evidence_link_created	{"evidence_item_id": 7, "hypothesis_id": 6, "stance": "contradicts"}	4	2026-07-14 12:55:13.164597+00
+81	4	evidence_link_created	{"evidence_item_id": 8, "hypothesis_id": 6, "stance": "weakly_contradicts"}	4	2026-07-14 12:55:24.2867+00
+83	4	evidence_link_created	{"evidence_item_id": 9, "hypothesis_id": 6, "stance": "supports"}	4	2026-07-14 12:55:34.551668+00
+85	4	evidence_link_created	{"evidence_item_id": 10, "hypothesis_id": 6, "stance": "weakly_supports"}	4	2026-07-14 12:55:51.748559+00
+87	4	evidence_link_created	{"evidence_item_id": 11, "hypothesis_id": 6, "stance": "supports"}	4	2026-07-14 12:55:59.838143+00
+89	4	evidence_link_updated	{"evidence_item_id": 11, "hypothesis_id": 7, "stance": "contradicts"}	4	2026-07-14 12:56:31.797327+00
+91	4	evidence_link_created	{"evidence_item_id": 12, "hypothesis_id": 7, "stance": "weakly_supports"}	4	2026-07-14 12:56:42.160841+00
+93	4	alternative_acknowledged	{"item_id": 1, "item_type": "alternative_hypothesis"}	5	2026-07-14 12:59:02.408314+00
+95	4	alternative_acknowledged	{"item_id": 3, "item_type": "contradictory_evidence"}	5	2026-07-14 13:04:53.261021+00
+98	4	final_reconstruction_submitted	{"selected_hypothesis_id": 6, "final_confidence": 80.0}	7	2026-07-14 13:14:16.680491+00
+99	4	session_completed	{}	7	2026-07-14 13:14:16.680491+00
+70	4	evidence_link_updated	{"evidence_item_id": 3, "hypothesis_id": 7, "stance": "neutral"}	4	2026-07-14 12:54:23.747936+00
+72	4	evidence_link_created	{"evidence_item_id": 4, "hypothesis_id": 7, "stance": "neutral"}	4	2026-07-14 12:54:38.166833+00
+74	4	evidence_link_created	{"evidence_item_id": 5, "hypothesis_id": 7, "stance": "contradicts"}	4	2026-07-14 12:54:50.050118+00
+76	4	evidence_link_created	{"evidence_item_id": 6, "hypothesis_id": 7, "stance": "contradicts"}	4	2026-07-14 12:54:56.943645+00
+78	4	evidence_link_updated	{"evidence_item_id": 6, "hypothesis_id": 7, "stance": "contradicts"}	4	2026-07-14 12:55:05.866318+00
+80	4	evidence_link_created	{"evidence_item_id": 7, "hypothesis_id": 7, "stance": "supports"}	4	2026-07-14 12:55:16.140118+00
+82	4	evidence_link_created	{"evidence_item_id": 8, "hypothesis_id": 7, "stance": "weakly_supports"}	4	2026-07-14 12:55:28.87246+00
+84	4	evidence_link_created	{"evidence_item_id": 9, "hypothesis_id": 7, "stance": "contradicts"}	4	2026-07-14 12:55:36.406311+00
+86	4	evidence_link_created	{"evidence_item_id": 10, "hypothesis_id": 7, "stance": "weakly_supports"}	4	2026-07-14 12:55:54.22775+00
+88	4	evidence_link_created	{"evidence_item_id": 11, "hypothesis_id": 7, "stance": "contradicts"}	4	2026-07-14 12:56:31.163318+00
+90	4	evidence_link_created	{"evidence_item_id": 12, "hypothesis_id": 6, "stance": "supports"}	4	2026-07-14 12:56:39.538599+00
+92	4	stage_advanced	{"to_stage": 5}	5	2026-07-14 12:56:46.428411+00
+94	4	alternative_acknowledged	{"item_id": 2, "item_type": "contradictory_evidence"}	5	2026-07-14 13:03:55.635626+00
+96	4	alternative_acknowledged	{"item_id": 4, "item_type": "contradictory_evidence"}	5	2026-07-14 13:05:32.413321+00
+97	4	stage_advanced	{"to_stage": 6}	6	2026-07-14 13:05:34.469708+00
+100	5	session_started	{"case_id": 2}	1	2026-07-19 02:38:51.243243+00
+101	6	session_started	{"case_id": 2}	1	2026-07-19 06:56:29.776328+00
+102	6	observation_created	{"observation_id": 13}	1	2026-07-19 06:57:08.212046+00
+103	6	stage_advanced	{"to_stage": 2}	2	2026-07-19 06:57:11.546078+00
+104	6	stage_advanced	{"to_stage": 3}	3	2026-07-19 06:57:31.930656+00
+105	6	hypothesis_created	{"hypothesis_id": 8, "initial_confidence": 67.0}	3	2026-07-19 06:57:47.107248+00
+106	6	hypothesis_created	{"hypothesis_id": 9, "initial_confidence": 50.0}	3	2026-07-19 06:57:55.71686+00
+107	6	hypothesis_became_preferred	{"hypothesis_id": 8}	3	2026-07-19 06:57:55.724133+00
+108	6	stage_advanced	{"to_stage": 4}	4	2026-07-19 06:57:59.576257+00
+109	7	session_started	{"case_id": 2}	1	2026-07-19 07:55:06.125794+00
+110	8	session_started	{"case_id": 2}	1	2026-07-19 12:27:48.792872+00
+111	9	session_started	{"case_id": 2}	1	2026-07-19 23:32:59.52139+00
+112	10	session_started	{"case_id": 2}	1	2026-07-19 23:54:52.74464+00
+113	11	session_started	{"case_id": 1}	1	2026-07-20 10:22:19.380504+00
+114	12	session_started	{"case_id": 2}	1	2026-07-20 10:48:55.438766+00
+115	13	session_started	{"case_id": 1}	1	2026-07-20 13:50:55.289267+00
+116	13	observation_created	{"observation_id": 14}	1	2026-07-20 13:53:51.303813+00
+117	13	stage_advanced	{"to_stage": 2}	2	2026-07-20 13:54:38.223721+00
+118	13	stage_advanced	{"to_stage": 3}	3	2026-07-20 14:00:22.185047+00
+119	13	hypothesis_created	{"hypothesis_id": 10, "initial_confidence": 60.0}	3	2026-07-20 14:01:32.770982+00
+120	13	hypothesis_created	{"hypothesis_id": 11, "initial_confidence": 40.0}	3	2026-07-20 14:03:04.077182+00
+121	13	hypothesis_became_preferred	{"hypothesis_id": 10}	3	2026-07-20 14:03:04.083989+00
+122	13	stage_advanced	{"to_stage": 4}	4	2026-07-20 14:04:08.775318+00
+123	13	evidence_link_created	{"evidence_item_id": 1, "hypothesis_id": 10, "stance": "supports"}	4	2026-07-20 14:04:32.392696+00
+124	13	evidence_link_created	{"evidence_item_id": 1, "hypothesis_id": 11, "stance": "neutral"}	4	2026-07-20 14:04:34.461243+00
+125	13	evidence_link_updated	{"evidence_item_id": 1, "hypothesis_id": 11, "stance": "weakly_contradicts"}	4	2026-07-20 14:04:43.943213+00
+126	13	evidence_link_created	{"evidence_item_id": 2, "hypothesis_id": 10, "stance": "supports"}	4	2026-07-20 14:05:03.074333+00
+127	13	evidence_link_created	{"evidence_item_id": 2, "hypothesis_id": 11, "stance": "supports"}	4	2026-07-20 14:05:04.577581+00
+128	13	evidence_link_created	{"evidence_item_id": 3, "hypothesis_id": 10, "stance": "supports"}	4	2026-07-20 14:05:19.922218+00
+129	13	evidence_link_created	{"evidence_item_id": 3, "hypothesis_id": 11, "stance": "weakly_supports"}	4	2026-07-20 14:05:32.510954+00
+130	13	evidence_link_created	{"evidence_item_id": 4, "hypothesis_id": 10, "stance": "weakly_supports"}	4	2026-07-20 14:05:38.989111+00
+131	13	evidence_link_created	{"evidence_item_id": 4, "hypothesis_id": 11, "stance": "supports"}	4	2026-07-20 14:05:44.443201+00
+132	13	evidence_link_created	{"evidence_item_id": 5, "hypothesis_id": 10, "stance": "supports"}	4	2026-07-20 14:05:53.388325+00
+133	13	evidence_link_created	{"evidence_item_id": 5, "hypothesis_id": 11, "stance": "neutral"}	4	2026-07-20 14:05:55.126373+00
+134	13	evidence_link_created	{"evidence_item_id": 6, "hypothesis_id": 10, "stance": "supports"}	4	2026-07-20 14:06:00.006345+00
+135	13	evidence_link_created	{"evidence_item_id": 6, "hypothesis_id": 11, "stance": "contradicts"}	4	2026-07-20 14:06:04.95234+00
+136	13	evidence_link_created	{"evidence_item_id": 7, "hypothesis_id": 10, "stance": "weakly_supports"}	4	2026-07-20 14:06:09.985389+00
+137	13	evidence_link_created	{"evidence_item_id": 7, "hypothesis_id": 11, "stance": "weakly_supports"}	4	2026-07-20 14:06:11.853071+00
+138	13	evidence_link_created	{"evidence_item_id": 8, "hypothesis_id": 10, "stance": "weakly_contradicts"}	4	2026-07-20 14:06:27.839847+00
+139	13	evidence_link_created	{"evidence_item_id": 8, "hypothesis_id": 11, "stance": "weakly_supports"}	4	2026-07-20 14:06:30.110668+00
+140	13	evidence_link_created	{"evidence_item_id": 9, "hypothesis_id": 10, "stance": "weakly_supports"}	4	2026-07-20 14:06:53.184227+00
+141	13	evidence_link_created	{"evidence_item_id": 9, "hypothesis_id": 11, "stance": "weakly_supports"}	4	2026-07-20 14:06:54.582321+00
+142	13	evidence_link_created	{"evidence_item_id": 10, "hypothesis_id": 10, "stance": "supports"}	4	2026-07-20 14:06:59.919894+00
+143	13	evidence_link_created	{"evidence_item_id": 10, "hypothesis_id": 11, "stance": "neutral"}	4	2026-07-20 14:07:09.458643+00
+144	13	evidence_link_created	{"evidence_item_id": 11, "hypothesis_id": 10, "stance": "supports"}	4	2026-07-20 14:07:14.891324+00
+145	13	evidence_link_created	{"evidence_item_id": 11, "hypothesis_id": 11, "stance": "contradicts"}	4	2026-07-20 14:07:19.805897+00
+146	13	evidence_link_created	{"evidence_item_id": 12, "hypothesis_id": 10, "stance": "supports"}	4	2026-07-20 14:07:28.001422+00
+147	13	evidence_link_created	{"evidence_item_id": 12, "hypothesis_id": 11, "stance": "contradicts"}	4	2026-07-20 14:07:41.114613+00
+148	13	evidence_link_created	{"evidence_item_id": 28, "hypothesis_id": 10, "stance": "neutral"}	4	2026-07-20 14:08:48.666838+00
+149	13	evidence_link_created	{"evidence_item_id": 28, "hypothesis_id": 11, "stance": "neutral"}	4	2026-07-20 14:08:50.659704+00
+150	13	stage_advanced	{"to_stage": 5}	5	2026-07-20 14:08:56.333455+00
+153	13	stage_advanced	{"to_stage": 6}	6	2026-07-20 14:14:48.245975+00
+151	13	alternative_acknowledged	{"item_id": 5, "item_type": "alternative_hypothesis"}	5	2026-07-20 14:12:43.731115+00
+152	13	alternative_acknowledged	{"item_id": 6, "item_type": "contradictory_evidence"}	5	2026-07-20 14:14:45.208035+00
+156	14	session_started	{"case_id": 2}	1	2026-07-20 14:26:07.792863+00
+157	14	observation_created	{"observation_id": 15}	1	2026-07-20 14:28:00.632233+00
+159	14	stage_advanced	{"to_stage": 3}	3	2026-07-20 14:41:41.873869+00
+162	14	hypothesis_became_preferred	{"hypothesis_id": 12}	3	2026-07-20 14:43:53.55202+00
+154	13	final_reconstruction_submitted	{"selected_hypothesis_id": 10, "final_confidence": 65.0}	7	2026-07-20 14:19:07.154107+00
+155	13	session_completed	{}	7	2026-07-20 14:19:07.154107+00
+160	14	hypothesis_created	{"hypothesis_id": 12, "initial_confidence": 90.0}	3	2026-07-20 14:43:21.696199+00
+161	14	hypothesis_created	{"hypothesis_id": 13, "initial_confidence": 10.0}	3	2026-07-20 14:43:53.532263+00
+163	14	stage_advanced	{"to_stage": 4}	4	2026-07-20 14:43:58.588923+00
+164	14	evidence_link_created	{"evidence_item_id": 39, "hypothesis_id": 12, "stance": "supports"}	4	2026-07-20 14:44:31.320016+00
+165	14	evidence_link_created	{"evidence_item_id": 39, "hypothesis_id": 13, "stance": "supports"}	4	2026-07-20 14:44:33.540333+00
+166	14	evidence_link_created	{"evidence_item_id": 40, "hypothesis_id": 12, "stance": "supports"}	4	2026-07-20 14:44:36.83704+00
+167	14	evidence_link_created	{"evidence_item_id": 40, "hypothesis_id": 13, "stance": "supports"}	4	2026-07-20 14:44:38.134813+00
+168	14	evidence_link_created	{"evidence_item_id": 41, "hypothesis_id": 12, "stance": "neutral"}	4	2026-07-20 14:44:44.791015+00
+169	14	evidence_link_created	{"evidence_item_id": 41, "hypothesis_id": 13, "stance": "supports"}	4	2026-07-20 14:45:00.796185+00
+170	14	evidence_link_updated	{"evidence_item_id": 41, "hypothesis_id": 13, "stance": "neutral"}	4	2026-07-20 14:45:07.73758+00
+171	14	evidence_link_updated	{"evidence_item_id": 41, "hypothesis_id": 13, "stance": "weakly_supports"}	4	2026-07-20 14:45:13.306887+00
+172	14	evidence_link_updated	{"evidence_item_id": 41, "hypothesis_id": 12, "stance": "supports"}	4	2026-07-20 14:45:20.5052+00
+173	14	evidence_link_created	{"evidence_item_id": 29, "hypothesis_id": 12, "stance": "neutral"}	4	2026-07-20 14:45:37.355708+00
+174	14	evidence_link_created	{"evidence_item_id": 29, "hypothesis_id": 13, "stance": "neutral"}	4	2026-07-20 14:45:40.47174+00
+175	14	evidence_link_created	{"evidence_item_id": 30, "hypothesis_id": 12, "stance": "neutral"}	4	2026-07-20 14:45:48.666868+00
+176	14	evidence_link_created	{"evidence_item_id": 30, "hypothesis_id": 13, "stance": "neutral"}	4	2026-07-20 14:45:49.909339+00
+177	14	evidence_link_created	{"evidence_item_id": 31, "hypothesis_id": 12, "stance": "neutral"}	4	2026-07-20 14:46:04.451341+00
+178	14	evidence_link_created	{"evidence_item_id": 31, "hypothesis_id": 13, "stance": "neutral"}	4	2026-07-20 14:46:05.707385+00
+179	14	evidence_link_created	{"evidence_item_id": 32, "hypothesis_id": 12, "stance": "supports"}	4	2026-07-20 14:46:12.513572+00
+180	14	evidence_link_created	{"evidence_item_id": 32, "hypothesis_id": 13, "stance": "weakly_contradicts"}	4	2026-07-20 14:46:28.061675+00
+181	14	evidence_link_created	{"evidence_item_id": 33, "hypothesis_id": 12, "stance": "supports"}	4	2026-07-20 14:46:52.42426+00
+182	14	evidence_link_created	{"evidence_item_id": 33, "hypothesis_id": 13, "stance": "weakly_supports"}	4	2026-07-20 14:46:54.065068+00
+183	14	evidence_link_created	{"evidence_item_id": 34, "hypothesis_id": 12, "stance": "neutral"}	4	2026-07-20 14:47:04.963591+00
+184	14	evidence_link_created	{"evidence_item_id": 34, "hypothesis_id": 13, "stance": "weakly_supports"}	4	2026-07-20 14:47:08.872936+00
+185	14	evidence_link_created	{"evidence_item_id": 35, "hypothesis_id": 12, "stance": "supports"}	4	2026-07-20 14:47:13.05191+00
+186	14	evidence_link_created	{"evidence_item_id": 35, "hypothesis_id": 13, "stance": "neutral"}	4	2026-07-20 14:47:14.851453+00
+187	14	evidence_link_created	{"evidence_item_id": 36, "hypothesis_id": 12, "stance": "supports"}	4	2026-07-20 14:47:18.164676+00
+188	14	evidence_link_created	{"evidence_item_id": 36, "hypothesis_id": 13, "stance": "weakly_contradicts"}	4	2026-07-20 14:47:36.425503+00
+189	14	evidence_link_created	{"evidence_item_id": 37, "hypothesis_id": 12, "stance": "supports"}	4	2026-07-20 14:47:40.556006+00
+190	14	evidence_link_created	{"evidence_item_id": 37, "hypothesis_id": 13, "stance": "contradicts"}	4	2026-07-20 14:47:46.221964+00
+191	14	evidence_link_created	{"evidence_item_id": 42, "hypothesis_id": 12, "stance": "supports"}	4	2026-07-20 14:48:39.592771+00
+192	14	evidence_link_updated	{"evidence_item_id": 42, "hypothesis_id": 12, "stance": "neutral"}	4	2026-07-20 14:48:58.696831+00
+193	14	evidence_link_created	{"evidence_item_id": 42, "hypothesis_id": 13, "stance": "neutral"}	4	2026-07-20 14:49:01.021242+00
+194	14	evidence_link_created	{"evidence_item_id": 43, "hypothesis_id": 12, "stance": "supports"}	4	2026-07-20 14:49:07.843849+00
+195	14	evidence_link_created	{"evidence_item_id": 43, "hypothesis_id": 13, "stance": "neutral"}	4	2026-07-20 14:49:19.654101+00
+196	14	evidence_link_created	{"evidence_item_id": 44, "hypothesis_id": 12, "stance": "supports"}	4	2026-07-20 14:49:22.406077+00
+197	14	evidence_link_created	{"evidence_item_id": 44, "hypothesis_id": 13, "stance": "contradicts"}	4	2026-07-20 14:49:25.175614+00
+198	14	stage_advanced	{"to_stage": 5}	5	2026-07-20 14:49:27.214317+00
+199	14	alternative_acknowledged	{"item_id": 7, "item_type": "alternative_hypothesis"}	5	2026-07-20 14:53:43.519358+00
+200	14	stage_advanced	{"to_stage": 6}	6	2026-07-20 14:53:47.622518+00
+201	14	final_reconstruction_submitted	{"selected_hypothesis_id": 12, "final_confidence": 99.0}	7	2026-07-20 14:55:20.897026+00
+202	14	session_completed	{}	7	2026-07-20 14:55:20.897026+00
+203	15	session_started	{"case_id": 2}	1	2026-07-23 14:32:52.46694+00
+204	15	observation_created	{"observation_id": 16}	1	2026-07-23 14:38:01.946383+00
+205	15	observation_created	{"observation_id": 17}	1	2026-07-23 14:39:46.031576+00
+206	15	observation_created	{"observation_id": 18}	1	2026-07-23 19:17:08.671562+00
+207	15	observation_created	{"observation_id": 19}	1	2026-07-23 19:18:45.990588+00
+208	15	observation_created	{"observation_id": 20}	1	2026-07-23 19:20:02.035188+00
+209	15	observation_created	{"observation_id": 21}	1	2026-07-23 19:21:30.95157+00
+210	15	observation_created	{"observation_id": 22}	1	2026-07-23 19:23:29.85373+00
+211	15	observation_created	{"observation_id": 23}	1	2026-07-23 19:25:16.964554+00
+212	15	observation_created	{"observation_id": 24}	1	2026-07-23 19:26:34.175766+00
+213	15	observation_created	{"observation_id": 25}	1	2026-07-23 19:28:11.741449+00
+214	15	stage_advanced	{"to_stage": 2}	2	2026-07-23 19:28:14.545563+00
+215	15	stage_advanced	{"to_stage": 3}	3	2026-07-23 19:28:30.928305+00
+216	15	hypothesis_created	{"hypothesis_id": 14, "initial_confidence": 90.0}	3	2026-07-23 19:32:24.415601+00
+217	15	hypothesis_created	{"hypothesis_id": 15, "initial_confidence": 40.0}	3	2026-07-23 19:39:05.003334+00
+218	15	hypothesis_became_preferred	{"hypothesis_id": 14}	3	2026-07-23 19:39:05.009231+00
+219	15	hypothesis_created	{"hypothesis_id": 16, "initial_confidence": 60.0}	3	2026-07-23 19:41:01.49727+00
+220	15	stage_advanced	{"to_stage": 4}	4	2026-07-23 19:41:03.780126+00
+221	15	evidence_link_created	{"evidence_item_id": 39, "hypothesis_id": 14, "stance": "weakly_supports"}	4	2026-07-23 19:41:31.469277+00
+222	15	evidence_link_updated	{"evidence_item_id": 39, "hypothesis_id": 14, "stance": "weakly_contradicts"}	4	2026-07-23 19:41:37.706291+00
+223	15	evidence_link_created	{"evidence_item_id": 39, "hypothesis_id": 15, "stance": "neutral"}	4	2026-07-23 19:41:45.220035+00
+224	15	evidence_link_created	{"evidence_item_id": 39, "hypothesis_id": 16, "stance": "neutral"}	4	2026-07-23 19:41:53.873554+00
+225	15	evidence_link_updated	{"evidence_item_id": 39, "hypothesis_id": 14, "stance": "neutral"}	4	2026-07-23 19:42:02.386451+00
+226	15	evidence_link_updated	{"evidence_item_id": 39, "hypothesis_id": 15, "stance": "weakly_supports"}	4	2026-07-23 19:42:07.707708+00
+227	15	evidence_link_created	{"evidence_item_id": 40, "hypothesis_id": 14, "stance": "neutral"}	4	2026-07-23 19:42:23.581002+00
+289	17	stage_advanced	{"to_stage": 2}	2	2026-07-24 21:50:25.039544+00
+228	15	evidence_link_created	{"evidence_item_id": 40, "hypothesis_id": 15, "stance": "supports"}	4	2026-07-23 19:42:31.712223+00
+229	15	evidence_link_created	{"evidence_item_id": 40, "hypothesis_id": 16, "stance": "neutral"}	4	2026-07-23 19:42:38.229815+00
+230	15	evidence_link_created	{"evidence_item_id": 41, "hypothesis_id": 14, "stance": "supports"}	4	2026-07-23 19:43:09.391259+00
+231	15	evidence_link_created	{"evidence_item_id": 41, "hypothesis_id": 15, "stance": "weakly_supports"}	4	2026-07-23 19:43:13.368278+00
+232	15	evidence_link_created	{"evidence_item_id": 41, "hypothesis_id": 16, "stance": "contradicts"}	4	2026-07-23 19:43:15.326559+00
+233	15	evidence_link_created	{"evidence_item_id": 29, "hypothesis_id": 14, "stance": "neutral"}	4	2026-07-23 19:43:24.986933+00
+234	15	evidence_link_created	{"evidence_item_id": 29, "hypothesis_id": 15, "stance": "neutral"}	4	2026-07-23 19:43:26.687433+00
+235	15	evidence_link_created	{"evidence_item_id": 29, "hypothesis_id": 16, "stance": "neutral"}	4	2026-07-23 19:43:27.125982+00
+236	15	evidence_link_created	{"evidence_item_id": 30, "hypothesis_id": 14, "stance": "weakly_supports"}	4	2026-07-23 19:43:41.322059+00
+237	15	evidence_link_created	{"evidence_item_id": 30, "hypothesis_id": 15, "stance": "neutral"}	4	2026-07-23 19:43:42.50985+00
+238	15	evidence_link_created	{"evidence_item_id": 30, "hypothesis_id": 16, "stance": "neutral"}	4	2026-07-23 19:43:43.467446+00
+239	15	evidence_link_created	{"evidence_item_id": 31, "hypothesis_id": 14, "stance": "neutral"}	4	2026-07-23 19:43:56.466807+00
+240	15	evidence_link_created	{"evidence_item_id": 31, "hypothesis_id": 15, "stance": "neutral"}	4	2026-07-23 19:43:57.541534+00
+241	15	evidence_link_created	{"evidence_item_id": 31, "hypothesis_id": 16, "stance": "neutral"}	4	2026-07-23 19:43:58.317067+00
+242	15	evidence_link_created	{"evidence_item_id": 32, "hypothesis_id": 14, "stance": "supports"}	4	2026-07-23 19:44:05.112011+00
+243	15	evidence_link_created	{"evidence_item_id": 32, "hypothesis_id": 15, "stance": "weakly_contradicts"}	4	2026-07-23 19:44:10.979215+00
+244	15	evidence_link_created	{"evidence_item_id": 32, "hypothesis_id": 16, "stance": "weakly_supports"}	4	2026-07-23 19:44:16.055356+00
+245	15	evidence_link_created	{"evidence_item_id": 33, "hypothesis_id": 14, "stance": "weakly_supports"}	4	2026-07-23 19:44:32.755319+00
+246	15	evidence_link_created	{"evidence_item_id": 33, "hypothesis_id": 15, "stance": "weakly_supports"}	4	2026-07-23 19:44:38.212952+00
+247	15	evidence_link_created	{"evidence_item_id": 33, "hypothesis_id": 16, "stance": "supports"}	4	2026-07-23 19:44:41.770537+00
+248	15	evidence_link_created	{"evidence_item_id": 34, "hypothesis_id": 14, "stance": "neutral"}	4	2026-07-23 19:44:49.795972+00
+249	15	evidence_link_created	{"evidence_item_id": 34, "hypothesis_id": 15, "stance": "supports"}	4	2026-07-23 19:44:52.912756+00
+250	15	evidence_link_created	{"evidence_item_id": 34, "hypothesis_id": 16, "stance": "supports"}	4	2026-07-23 19:44:56.024064+00
+251	15	evidence_link_created	{"evidence_item_id": 35, "hypothesis_id": 14, "stance": "supports"}	4	2026-07-23 19:45:05.058803+00
+252	15	evidence_link_created	{"evidence_item_id": 35, "hypothesis_id": 15, "stance": "contradicts"}	4	2026-07-23 19:45:08.776423+00
+253	15	evidence_link_created	{"evidence_item_id": 35, "hypothesis_id": 16, "stance": "weakly_contradicts"}	4	2026-07-23 19:45:12.95064+00
+254	15	evidence_link_updated	{"evidence_item_id": 35, "hypothesis_id": 16, "stance": "contradicts"}	4	2026-07-23 19:45:14.041527+00
+255	15	evidence_link_updated	{"evidence_item_id": 35, "hypothesis_id": 16, "stance": "weakly_contradicts"}	4	2026-07-23 19:45:15.060056+00
+256	15	evidence_link_created	{"evidence_item_id": 36, "hypothesis_id": 14, "stance": "supports"}	4	2026-07-23 19:45:19.905976+00
+257	15	evidence_link_created	{"evidence_item_id": 36, "hypothesis_id": 15, "stance": "weakly_contradicts"}	4	2026-07-23 19:45:24.003273+00
+258	15	evidence_link_created	{"evidence_item_id": 36, "hypothesis_id": 16, "stance": "neutral"}	4	2026-07-23 19:45:28.613003+00
+259	15	evidence_link_updated	{"evidence_item_id": 36, "hypothesis_id": 16, "stance": "weakly_contradicts"}	4	2026-07-23 19:45:30.854283+00
+260	15	evidence_link_created	{"evidence_item_id": 37, "hypothesis_id": 14, "stance": "supports"}	4	2026-07-23 19:45:36.894664+00
+261	15	evidence_link_created	{"evidence_item_id": 37, "hypothesis_id": 15, "stance": "weakly_contradicts"}	4	2026-07-23 19:45:41.936174+00
+262	15	evidence_link_created	{"evidence_item_id": 37, "hypothesis_id": 16, "stance": "contradicts"}	4	2026-07-23 19:45:47.479274+00
+263	15	evidence_link_created	{"evidence_item_id": 42, "hypothesis_id": 15, "stance": "supports"}	4	2026-07-23 19:45:58.224595+00
+264	15	evidence_link_created	{"evidence_item_id": 42, "hypothesis_id": 14, "stance": "neutral"}	4	2026-07-23 19:46:06.32755+00
+265	15	evidence_link_created	{"evidence_item_id": 42, "hypothesis_id": 16, "stance": "neutral"}	4	2026-07-23 19:46:24.533278+00
+266	15	evidence_link_created	{"evidence_item_id": 43, "hypothesis_id": 14, "stance": "weakly_supports"}	4	2026-07-23 19:46:29.533553+00
+267	15	evidence_link_created	{"evidence_item_id": 43, "hypothesis_id": 15, "stance": "weakly_supports"}	4	2026-07-23 19:46:33.154906+00
+268	15	evidence_link_created	{"evidence_item_id": 43, "hypothesis_id": 16, "stance": "weakly_contradicts"}	4	2026-07-23 19:46:39.655426+00
+269	15	evidence_link_updated	{"evidence_item_id": 43, "hypothesis_id": 16, "stance": "neutral"}	4	2026-07-23 19:46:40.659218+00
+270	15	evidence_link_updated	{"evidence_item_id": 43, "hypothesis_id": 16, "stance": "neutral"}	4	2026-07-23 19:46:41.170463+00
+271	15	evidence_link_created	{"evidence_item_id": 44, "hypothesis_id": 14, "stance": "supports"}	4	2026-07-23 19:46:54.122448+00
+272	15	evidence_link_created	{"evidence_item_id": 44, "hypothesis_id": 16, "stance": "weakly_supports"}	4	2026-07-23 19:46:59.367126+00
+273	15	evidence_link_created	{"evidence_item_id": 44, "hypothesis_id": 15, "stance": "weakly_contradicts"}	4	2026-07-23 19:47:00.878978+00
+274	15	evidence_link_updated	{"evidence_item_id": 44, "hypothesis_id": 15, "stance": "neutral"}	4	2026-07-23 19:47:02.309924+00
+275	15	evidence_link_updated	{"evidence_item_id": 44, "hypothesis_id": 15, "stance": "weakly_contradicts"}	4	2026-07-23 19:47:03.36297+00
+276	15	stage_advanced	{"to_stage": 5}	5	2026-07-23 19:47:05.483519+00
+277	15	alternative_acknowledged	{"item_id": 8, "item_type": "alternative_hypothesis"}	5	2026-07-23 19:48:58.443575+00
+278	15	alternative_acknowledged	{"item_id": 9, "item_type": "alternative_hypothesis"}	5	2026-07-23 19:49:00.103645+00
+279	15	stage_advanced	{"to_stage": 6}	6	2026-07-23 19:49:02.425176+00
+280	15	final_reconstruction_submitted	{"selected_hypothesis_id": 14, "final_confidence": 90.0}	7	2026-07-23 19:56:33.728263+00
+281	15	session_completed	{}	7	2026-07-23 19:56:33.728263+00
+282	16	session_started	{"case_id": 2}	1	2026-07-24 15:41:24.355044+00
+283	17	session_started	{"case_id": 2}	1	2026-07-24 21:44:35.281394+00
+284	17	observation_created	{"observation_id": 26}	1	2026-07-24 21:46:33.342731+00
+285	17	observation_created	{"observation_id": 27}	1	2026-07-24 21:47:19.504216+00
+286	17	observation_created	{"observation_id": 28}	1	2026-07-24 21:49:00.269477+00
+287	17	observation_created	{"observation_id": 29}	1	2026-07-24 21:49:41.885861+00
+288	17	observation_created	{"observation_id": 30}	1	2026-07-24 21:50:22.268169+00
+290	17	stage_advanced	{"to_stage": 3}	3	2026-07-24 21:58:54.008194+00
+291	17	hypothesis_created	{"hypothesis_id": 17, "initial_confidence": 50.0}	3	2026-07-24 22:02:17.872867+00
+295	17	evidence_link_created	{"evidence_item_id": 39, "hypothesis_id": 18, "stance": "neutral"}	4	2026-07-24 22:08:43.345066+00
+297	17	evidence_link_created	{"evidence_item_id": 40, "hypothesis_id": 18, "stance": "neutral"}	4	2026-07-24 22:08:57.649282+00
+299	17	evidence_link_created	{"evidence_item_id": 41, "hypothesis_id": 18, "stance": "neutral"}	4	2026-07-24 22:09:14.334443+00
+301	17	evidence_link_created	{"evidence_item_id": 29, "hypothesis_id": 18, "stance": "neutral"}	4	2026-07-24 22:09:32.479716+00
+303	17	evidence_link_updated	{"evidence_item_id": 29, "hypothesis_id": 18, "stance": "neutral"}	4	2026-07-24 22:09:48.620862+00
+305	17	evidence_link_created	{"evidence_item_id": 30, "hypothesis_id": 18, "stance": "neutral"}	4	2026-07-24 22:09:55.17708+00
+307	17	evidence_link_created	{"evidence_item_id": 31, "hypothesis_id": 18, "stance": "neutral"}	4	2026-07-24 22:10:03.191852+00
+309	17	evidence_link_created	{"evidence_item_id": 32, "hypothesis_id": 17, "stance": "neutral"}	4	2026-07-24 22:10:26.448271+00
+311	17	evidence_link_created	{"evidence_item_id": 33, "hypothesis_id": 17, "stance": "neutral"}	4	2026-07-24 22:10:53.496637+00
+313	17	evidence_link_updated	{"evidence_item_id": 33, "hypothesis_id": 18, "stance": "supports"}	4	2026-07-24 22:10:58.562792+00
+315	17	evidence_link_updated	{"evidence_item_id": 34, "hypothesis_id": 17, "stance": "neutral"}	4	2026-07-24 22:11:08.314893+00
+317	17	evidence_link_created	{"evidence_item_id": 35, "hypothesis_id": 17, "stance": "weakly_supports"}	4	2026-07-24 22:11:13.404079+00
+319	17	evidence_link_created	{"evidence_item_id": 36, "hypothesis_id": 17, "stance": "weakly_supports"}	4	2026-07-24 22:11:24.371685+00
+321	17	evidence_link_created	{"evidence_item_id": 37, "hypothesis_id": 17, "stance": "supports"}	4	2026-07-24 22:11:30.16935+00
+323	17	evidence_link_created	{"evidence_item_id": 42, "hypothesis_id": 17, "stance": "neutral"}	4	2026-07-24 22:11:37.889624+00
+325	17	evidence_link_created	{"evidence_item_id": 43, "hypothesis_id": 18, "stance": "weakly_supports"}	4	2026-07-24 22:11:48.246946+00
+327	17	evidence_link_created	{"evidence_item_id": 44, "hypothesis_id": 17, "stance": "weakly_supports"}	4	2026-07-24 22:12:00.169122+00
+329	17	stage_advanced	{"to_stage": 5}	5	2026-07-24 22:12:03.136439+00
+332	17	final_reconstruction_submitted	{"selected_hypothesis_id": 18, "final_confidence": 75.0}	7	2026-07-24 22:20:13.529872+00
+333	17	session_completed	{}	7	2026-07-24 22:20:13.529872+00
+292	17	hypothesis_created	{"hypothesis_id": 18, "initial_confidence": 50.0}	3	2026-07-24 22:07:52.323519+00
+293	17	stage_advanced	{"to_stage": 4}	4	2026-07-24 22:07:54.574305+00
+294	17	evidence_link_created	{"evidence_item_id": 39, "hypothesis_id": 17, "stance": "neutral"}	4	2026-07-24 22:08:38.778946+00
+296	17	evidence_link_created	{"evidence_item_id": 40, "hypothesis_id": 17, "stance": "neutral"}	4	2026-07-24 22:08:55.859558+00
+298	17	evidence_link_created	{"evidence_item_id": 41, "hypothesis_id": 17, "stance": "weakly_supports"}	4	2026-07-24 22:09:09.282141+00
+300	17	evidence_link_created	{"evidence_item_id": 29, "hypothesis_id": 17, "stance": "neutral"}	4	2026-07-24 22:09:29.096453+00
+302	17	evidence_link_updated	{"evidence_item_id": 29, "hypothesis_id": 18, "stance": "weakly_supports"}	4	2026-07-24 22:09:46.31222+00
+304	17	evidence_link_created	{"evidence_item_id": 30, "hypothesis_id": 17, "stance": "neutral"}	4	2026-07-24 22:09:53.692385+00
+306	17	evidence_link_created	{"evidence_item_id": 31, "hypothesis_id": 17, "stance": "neutral"}	4	2026-07-24 22:10:02.379875+00
+308	17	evidence_link_updated	{"evidence_item_id": 31, "hypothesis_id": 18, "stance": "weakly_supports"}	4	2026-07-24 22:10:04.520348+00
+310	17	evidence_link_created	{"evidence_item_id": 32, "hypothesis_id": 18, "stance": "neutral"}	4	2026-07-24 22:10:28.739864+00
+312	17	evidence_link_created	{"evidence_item_id": 33, "hypothesis_id": 18, "stance": "weakly_supports"}	4	2026-07-24 22:10:54.971003+00
+314	17	evidence_link_created	{"evidence_item_id": 34, "hypothesis_id": 17, "stance": "weakly_contradicts"}	4	2026-07-24 22:11:05.410945+00
+316	17	evidence_link_created	{"evidence_item_id": 34, "hypothesis_id": 18, "stance": "neutral"}	4	2026-07-24 22:11:10.238685+00
+318	17	evidence_link_created	{"evidence_item_id": 35, "hypothesis_id": 18, "stance": "weakly_supports"}	4	2026-07-24 22:11:16.611376+00
+320	17	evidence_link_created	{"evidence_item_id": 36, "hypothesis_id": 18, "stance": "weakly_supports"}	4	2026-07-24 22:11:26.003958+00
+322	17	evidence_link_created	{"evidence_item_id": 37, "hypothesis_id": 18, "stance": "neutral"}	4	2026-07-24 22:11:33.326936+00
+324	17	evidence_link_created	{"evidence_item_id": 42, "hypothesis_id": 18, "stance": "neutral"}	4	2026-07-24 22:11:41.275163+00
+326	17	evidence_link_created	{"evidence_item_id": 43, "hypothesis_id": 17, "stance": "weakly_supports"}	4	2026-07-24 22:11:49.537656+00
+328	17	evidence_link_created	{"evidence_item_id": 44, "hypothesis_id": 18, "stance": "weakly_supports"}	4	2026-07-24 22:12:01.373106+00
+330	17	alternative_acknowledged	{"item_id": 10, "item_type": "alternative_hypothesis"}	5	2026-07-24 22:13:44.559995+00
+331	17	stage_advanced	{"to_stage": 6}	6	2026-07-24 22:13:48.341425+00
+334	18	session_started	{"case_id": 2}	1	2026-07-26 05:55:25.180405+00
+335	18	observation_created	{"observation_id": 31}	1	2026-07-26 05:57:04.430618+00
+336	18	stage_advanced	{"to_stage": 2}	2	2026-07-26 05:57:09.630426+00
+337	18	stage_advanced	{"to_stage": 3}	3	2026-07-26 06:01:21.259851+00
+338	18	hypothesis_created	{"hypothesis_id": 19, "initial_confidence": 71.0}	3	2026-07-26 06:19:05.394262+00
+339	18	hypothesis_created	{"hypothesis_id": 20, "initial_confidence": 83.0}	3	2026-07-26 06:25:09.902264+00
+340	18	hypothesis_became_preferred	{"hypothesis_id": 20}	3	2026-07-26 06:25:09.907819+00
+341	18	stage_advanced	{"to_stage": 4}	4	2026-07-26 06:25:15.280746+00
+342	18	evidence_link_created	{"evidence_item_id": 39, "hypothesis_id": 19, "stance": "weakly_contradicts"}	4	2026-07-26 06:26:24.181637+00
+343	18	evidence_link_created	{"evidence_item_id": 39, "hypothesis_id": 20, "stance": "weakly_contradicts"}	4	2026-07-26 06:26:24.548873+00
+344	18	evidence_link_updated	{"evidence_item_id": 39, "hypothesis_id": 20, "stance": "weakly_supports"}	4	2026-07-26 06:26:27.765243+00
+345	18	evidence_link_created	{"evidence_item_id": 40, "hypothesis_id": 19, "stance": "supports"}	4	2026-07-26 06:26:54.109455+00
+346	18	evidence_link_created	{"evidence_item_id": 40, "hypothesis_id": 20, "stance": "weakly_contradicts"}	4	2026-07-26 06:27:01.052451+00
+347	18	evidence_link_updated	{"evidence_item_id": 40, "hypothesis_id": 20, "stance": "contradicts"}	4	2026-07-26 06:27:02.734438+00
+348	18	evidence_link_created	{"evidence_item_id": 41, "hypothesis_id": 19, "stance": "contradicts"}	4	2026-07-26 06:30:01.03243+00
+349	18	evidence_link_created	{"evidence_item_id": 41, "hypothesis_id": 20, "stance": "contradicts"}	4	2026-07-26 06:30:05.997591+00
+350	18	evidence_link_updated	{"evidence_item_id": 39, "hypothesis_id": 20, "stance": "contradicts"}	4	2026-07-26 06:33:49.615269+00
+351	18	evidence_link_updated	{"evidence_item_id": 39, "hypothesis_id": 19, "stance": "weakly_supports"}	4	2026-07-26 06:33:51.763197+00
+352	18	evidence_link_created	{"evidence_item_id": 29, "hypothesis_id": 19, "stance": "neutral"}	4	2026-07-26 06:34:47.64446+00
+353	18	evidence_link_created	{"evidence_item_id": 29, "hypothesis_id": 20, "stance": "neutral"}	4	2026-07-26 06:34:52.120242+00
+354	18	evidence_link_updated	{"evidence_item_id": 29, "hypothesis_id": 19, "stance": "weakly_supports"}	4	2026-07-26 06:34:58.649035+00
+355	18	evidence_link_created	{"evidence_item_id": 30, "hypothesis_id": 19, "stance": "weakly_supports"}	4	2026-07-26 06:35:11.175444+00
+356	18	evidence_link_created	{"evidence_item_id": 30, "hypothesis_id": 20, "stance": "weakly_supports"}	4	2026-07-26 06:35:13.534674+00
+357	18	evidence_link_created	{"evidence_item_id": 31, "hypothesis_id": 19, "stance": "weakly_supports"}	4	2026-07-26 06:35:23.411582+00
+358	18	evidence_link_created	{"evidence_item_id": 31, "hypothesis_id": 20, "stance": "weakly_supports"}	4	2026-07-26 06:35:25.113179+00
+359	18	evidence_link_created	{"evidence_item_id": 32, "hypothesis_id": 19, "stance": "supports"}	4	2026-07-26 06:35:37.208011+00
+360	18	evidence_link_created	{"evidence_item_id": 32, "hypothesis_id": 20, "stance": "weakly_supports"}	4	2026-07-26 06:35:39.332012+00
+361	18	evidence_link_created	{"evidence_item_id": 33, "hypothesis_id": 19, "stance": "supports"}	4	2026-07-26 06:35:54.448269+00
+362	18	evidence_link_created	{"evidence_item_id": 33, "hypothesis_id": 20, "stance": "weakly_supports"}	4	2026-07-26 06:35:55.860547+00
+363	18	evidence_link_created	{"evidence_item_id": 34, "hypothesis_id": 19, "stance": "neutral"}	4	2026-07-26 06:36:09.490294+00
+364	18	evidence_link_created	{"evidence_item_id": 34, "hypothesis_id": 20, "stance": "neutral"}	4	2026-07-26 06:36:17.547835+00
+365	18	evidence_link_created	{"evidence_item_id": 35, "hypothesis_id": 20, "stance": "contradicts"}	4	2026-07-26 06:36:28.840259+00
+366	18	evidence_link_created	{"evidence_item_id": 35, "hypothesis_id": 19, "stance": "contradicts"}	4	2026-07-26 06:36:31.098137+00
+367	18	evidence_link_updated	{"evidence_item_id": 35, "hypothesis_id": 20, "stance": "supports"}	4	2026-07-26 06:36:32.848259+00
+368	18	evidence_link_created	{"evidence_item_id": 36, "hypothesis_id": 19, "stance": "contradicts"}	4	2026-07-26 06:36:43.968351+00
+369	18	evidence_link_created	{"evidence_item_id": 36, "hypothesis_id": 20, "stance": "supports"}	4	2026-07-26 06:36:46.053323+00
+370	18	evidence_link_created	{"evidence_item_id": 37, "hypothesis_id": 19, "stance": "contradicts"}	4	2026-07-26 06:37:04.904618+00
+371	18	evidence_link_created	{"evidence_item_id": 37, "hypothesis_id": 20, "stance": "supports"}	4	2026-07-26 06:37:06.680869+00
+372	18	evidence_link_updated	{"evidence_item_id": 37, "hypothesis_id": 19, "stance": "neutral"}	4	2026-07-26 06:37:57.42283+00
+373	18	evidence_link_updated	{"evidence_item_id": 37, "hypothesis_id": 20, "stance": "weakly_supports"}	4	2026-07-26 06:37:58.471024+00
+374	18	evidence_link_created	{"evidence_item_id": 42, "hypothesis_id": 19, "stance": "weakly_supports"}	4	2026-07-26 06:38:10.456256+00
+375	18	evidence_link_created	{"evidence_item_id": 42, "hypothesis_id": 20, "stance": "supports"}	4	2026-07-26 06:38:12.35638+00
+376	18	evidence_link_created	{"evidence_item_id": 43, "hypothesis_id": 19, "stance": "contradicts"}	4	2026-07-26 06:38:28.82946+00
+377	18	evidence_link_created	{"evidence_item_id": 43, "hypothesis_id": 20, "stance": "supports"}	4	2026-07-26 06:38:31.246225+00
+378	18	evidence_link_created	{"evidence_item_id": 44, "hypothesis_id": 19, "stance": "neutral"}	4	2026-07-26 06:38:46.835612+00
+379	18	evidence_link_created	{"evidence_item_id": 44, "hypothesis_id": 20, "stance": "neutral"}	4	2026-07-26 06:38:48.260373+00
+380	18	stage_advanced	{"to_stage": 5}	5	2026-07-26 06:38:50.284026+00
+381	18	alternative_acknowledged	{"item_id": 11, "item_type": "alternative_hypothesis"}	5	2026-07-26 06:39:05.401695+00
+382	18	alternative_acknowledged	{"item_id": 13, "item_type": "contradictory_evidence"}	5	2026-07-26 06:39:08.280788+00
+383	18	alternative_acknowledged	{"item_id": 14, "item_type": "contradictory_evidence"}	5	2026-07-26 06:39:09.763196+00
+384	18	alternative_acknowledged	{"item_id": 12, "item_type": "contradictory_evidence"}	5	2026-07-26 06:39:11.564163+00
+385	18	stage_advanced	{"to_stage": 6}	6	2026-07-26 06:39:13.362189+00
+386	18	final_reconstruction_submitted	{"selected_hypothesis_id": 20, "final_confidence": 86.0}	7	2026-07-26 06:40:41.944039+00
+387	18	session_completed	{}	7	2026-07-26 06:40:41.944039+00
+388	19	session_started	{"case_id": 2}	1	2026-07-26 13:45:07.783929+00
+389	19	observation_created	{"observation_id": 32}	1	2026-07-26 13:57:18.29286+00
+390	19	stage_advanced	{"to_stage": 2}	2	2026-07-26 13:57:21.75969+00
+391	19	stage_advanced	{"to_stage": 3}	3	2026-07-26 13:57:41.409201+00
+392	20	session_started	{"case_id": 2}	1	2026-07-26 19:37:50.084932+00
+\.
+
+
+--
+-- Data for Name: alternative_acknowledgements; Type: TABLE DATA; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+COPY public.alternative_acknowledgements (id, session_id, item_type, hypothesis_id, evidence_item_id, acknowledged, acknowledged_at, reflection_note, created_at) FROM stdin;
+1	4	alternative_hypothesis	7	\N	t	2026-07-14 12:59:02.300629+00	pills could have been placed in his drink by someone he trust, this explains no forced entry, the victim invited the perpetrator in willingly. 	2026-07-14 12:56:46.395674+00
+2	4	contradictory_evidence	\N	3	t	2026-07-14 13:03:55.629747+00	the dispene date and number of remaining pills suggests the victim took his prescribed dose, if the victim had planned to take his own life it would make more sense for him to take the reaminder of the pills from the bottle he already had rather than going out to purchase an alternative as this would be difficult.	2026-07-14 12:56:46.395674+00
+3	4	contradictory_evidence	\N	7	t	2026-07-14 13:04:53.256209+00	records show he had no suicidal ideation adn tht his condition was improving	2026-07-14 12:56:46.395674+00
+4	4	contradictory_evidence	\N	8	t	2026-07-14 13:05:32.404151+00	the victim seemed to be in good spirits just hours before his death	2026-07-14 12:56:46.395674+00
+5	13	alternative_hypothesis	11	\N	t	2026-07-20 14:12:43.725102+00	It is unclear why Mr Mercer would purchase additional drugs to the prescription he had, which suggests the suicide explanation might not align with all the evidence and other hypotheses should be considered. For the murder hypothesis to hold I would need to establish whether anyone had visited Mr Mercer's flat on the day of his death. I would also need to know how he took the drugs - by swallowing them or by mixing with the alcohol. If it is the latter, the murder hypothesis becomes more plausible.  	2026-07-20 14:08:56.281797+00
+6	13	contradictory_evidence	\N	8	t	2026-07-20 14:14:45.196817+00	Mrs Patel had a positive interaction with the deceased, which could suggest that he had no intention of ending his own life. However, I do not consider this piece of evidence to be strongly contradicting, as it is possible Mr Mercer did not want to share his emotional state or disturb Mrs Patel.	2026-07-20 14:08:56.281797+00
+7	14	alternative_hypothesis	13	\N	t	2026-07-20 14:53:43.512427+00	The ex-boyfriend is suspicious because of his past stalking behaviour - messages, calls, worplace visits. The evidence does not support him being involved directly in the victim's dissapearance, however more investigation is necessary to establish if he could have cooperated with the unknown heavy-built man. 	2026-07-20 14:49:27.192477+00
+8	15	alternative_hypothesis	15	\N	t	2026-07-23 19:48:58.436253+00	In order for this to be true, she would need her passport, but this still could be her original plan before she met K. 	2026-07-23 19:47:05.455543+00
+9	15	alternative_hypothesis	16	\N	t	2026-07-23 19:49:00.097562+00	For this to be true, she would need to be travelling in a direction towards him and for evidence to suggest her ex and K know each other. 	2026-07-23 19:47:05.455543+00
+10	17	alternative_hypothesis	18	\N	t	2026-07-24 22:13:44.556276+00	If the unknown male was "K" this hypothesis could still be true. If Mara had a history of partaking in recreational drugs, that would also support the idea that she was not drugged. 	2026-07-24 22:12:03.114898+00
+11	18	alternative_hypothesis	19	\N	t	2026-07-26 06:39:05.397508+00	\N	2026-07-26 06:38:50.255257+00
+13	18	contradictory_evidence	\N	40	t	2026-07-26 06:39:08.277219+00	\N	2026-07-26 06:38:50.255257+00
+14	18	contradictory_evidence	\N	41	t	2026-07-26 06:39:09.760124+00	\N	2026-07-26 06:38:50.255257+00
+12	18	contradictory_evidence	\N	39	t	2026-07-26 06:39:11.561056+00	\N	2026-07-26 06:38:50.255257+00
+\.
+
+
+--
+-- Data for Name: bayesian_updates; Type: TABLE DATA; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+COPY public.bayesian_updates (id, hypothesis_id, prior_probability, posterior_probability, evidence_considered, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: cases; Type: TABLE DATA; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+COPY public.cases (id, title, description, bayesian_enabled, ground_truth_summary, created_by, created_at, is_active) FROM stdin;
+2	The Disappearance of Mara Voss	Mara Voss, aged 31, was reported missing by her flat mate Priya Sharma on Sunday 9 March 2025, approximately 36 hours after she was last seen leaving their shared flat at 14 Morwell Gardens at approximately 22:00 on Friday 7 March 2025. Mara failed to return home and all contact with her mobile phone ceased after 22:47 on 7 March. A missing persons investigation was opened on 9 March 2025. Mara has no prior history of going missing. She did not take her passport or laptop when she left the flat. You have been asked to conduct a structured reconstruction of the most plausible circumstances surrounding her disappearance, using the evidence collected during the investigation.	t	Mara Voss was targeted and removed from The Anchor public house by an unidentified male (Hypothesis B). The GHB in her drink confirms deliberate incapacitation. The CCTV and vehicle sighting are consistent with her being placed into a vehicle by this male at approximately 22:40. The cell site data likely reflects her phone being carried westward — possibly toward the airport to create the appearance of voluntary departure — rather than Mara travelling independently. The travel booking and financial transactions (Items 11, 13) are most likely a deliberate false trail created by the perpetrator or a co-conspirator, exploiting knowledge of Mara's financial details to suggest she left voluntarily. The retained passport is decisive — she could not have used the booked flight. The 'K' contact in her WhatsApp (Item 5) is a person of significant investigative interest and may represent either the perpetrator or an unwitting party. A thorough reconstructor should identify Hypothesis B as most plausible, explicitly account for the contradictory financial/travel evidence, acknowledge that Osei is not the perpetrator (Item 12), and note the significant outstanding lines of enquiry (ANPR, Border Force passenger manifest, identity of 'K', withheld phone number).	1	2026-07-18 20:03:39.853777+00	t
+1	The Death of Owen Mercer	At approximately 08:15 on a Thursday morning, Mrs. Patel, a retired neighbor living in the adjacent flat, attended the door of Mr. Owen Mercer (male, 38 years old) at 14B Ashford Court to return a parcel. Receiving no response and noticing the door was unlocked, she entered and discovered Mr. Mercer unresponsive on his living room floor. Emergency services were called at 08:19. Mr. Mercer was pronounced dead at the scene at 08:47. There are no signs of forced entry. No other occupants were present. A preliminary investigation has been opened. You have been asked to conduct a structured reconstruction of the circumstances surrounding Mr. Mercer's death using the evidence collected at the scene and through subsequent analysis.	t	Owen Mercer died as a result of intentional self-poisoning (suicide) through the combined ingestion of stockpiled diazepam (obtained from an undisclosed source in addition to his prescription) and alcohol. Evidence of planning includes prior internet searches about lethal doses, a handwritten note consistent with a farewell message, recent financial arrangements (funeral planning, estate fees), and a text message sent hours before death expressing hopelessness. The GP records and neighbor's account represent genuine contradictory evidence that a thorough reconstructor should acknowledge and explain (e.g. that suicidal intent may not always be apparent to others or reflected in clinical records). No third-party involvement is supported by the post-mortem findings.	1	2026-06-28 20:30:53.525629+00	f
+\.
+
+
+--
+-- Data for Name: evidence_hypothesis_links; Type: TABLE DATA; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+COPY public.evidence_hypothesis_links (id, session_id, evidence_item_id, hypothesis_id, stance, stance_value, likelihood_ratio, created_at, updated_at) FROM stdin;
+1	3	1	4	neutral	0	\N	2026-07-13 19:52:19.713776+00	\N
+2	3	1	5	neutral	0	1	2026-07-13 19:52:19.908526+00	2026-07-13 19:53:03.859348+00
+4	3	2	5	neutral	0	1	2026-07-13 19:53:31.380631+00	2026-07-13 19:53:37.908541+00
+3	3	2	4	neutral	0	1	2026-07-13 19:53:29.055734+00	2026-07-13 19:55:47.128845+00
+5	3	3	4	weakly_contradicts	-1	1	2026-07-13 19:55:53.63421+00	2026-07-13 19:56:02.547092+00
+6	3	3	5	weakly_contradicts	-1	1	2026-07-13 19:55:56.216363+00	2026-07-13 19:56:07.866345+00
+7	3	4	4	weakly_supports	1	1.2	2026-07-13 19:56:07.995938+00	2026-07-13 19:56:12.982501+00
+8	3	4	5	neutral	0	1	2026-07-13 19:56:15.78039+00	\N
+9	3	5	4	neutral	0	1.5	2026-07-13 20:02:38.147639+00	2026-07-13 20:03:02.196422+00
+10	3	5	5	neutral	0	\N	2026-07-13 20:03:02.29375+00	\N
+11	3	6	4	weakly_supports	1	\N	2026-07-13 20:05:07.337007+00	2026-07-13 20:05:10.401349+00
+12	3	6	5	neutral	0	\N	2026-07-13 20:05:11.858188+00	\N
+13	4	1	6	supports	2	\N	2026-07-14 12:53:27.603888+00	\N
+14	4	1	7	weakly_supports	1	\N	2026-07-14 12:53:46.284348+00	\N
+15	4	2	6	supports	2	\N	2026-07-14 12:54:00.670482+00	\N
+16	4	2	7	supports	2	\N	2026-07-14 12:54:04.992062+00	\N
+17	4	3	6	contradicts	-2	\N	2026-07-14 12:54:13.916099+00	\N
+18	4	3	7	neutral	0	\N	2026-07-14 12:54:20.892197+00	\N
+19	4	4	6	weakly_supports	1	\N	2026-07-14 12:54:35.915516+00	\N
+20	4	4	7	neutral	0	\N	2026-07-14 12:54:38.154968+00	\N
+21	4	5	6	supports	2	\N	2026-07-14 12:54:43.452956+00	\N
+22	4	5	7	contradicts	-2	\N	2026-07-14 12:54:50.037142+00	\N
+23	4	6	6	supports	2	\N	2026-07-14 12:54:54.593287+00	\N
+75	14	32	12	supports	2	\N	2026-07-20 14:46:12.495361+00	\N
+24	4	6	7	contradicts	-2	\N	2026-07-14 12:54:56.92343+00	2026-07-14 12:55:05.850025+00
+25	4	7	6	contradicts	-2	\N	2026-07-14 12:55:13.145104+00	\N
+26	4	7	7	supports	2	\N	2026-07-14 12:55:16.123899+00	\N
+27	4	8	6	weakly_contradicts	-1	\N	2026-07-14 12:55:24.270574+00	\N
+28	4	8	7	weakly_supports	1	\N	2026-07-14 12:55:28.859941+00	\N
+29	4	9	6	supports	2	\N	2026-07-14 12:55:34.53295+00	\N
+30	4	9	7	contradicts	-2	\N	2026-07-14 12:55:36.395376+00	\N
+31	4	10	6	weakly_supports	1	\N	2026-07-14 12:55:51.737513+00	\N
+32	4	10	7	weakly_supports	1	\N	2026-07-14 12:55:54.216866+00	\N
+33	4	11	6	supports	2	\N	2026-07-14 12:55:59.826672+00	\N
+34	4	11	7	contradicts	-2	\N	2026-07-14 12:56:31.148936+00	\N
+35	4	12	6	supports	2	\N	2026-07-14 12:56:39.516342+00	\N
+36	4	12	7	weakly_supports	1	\N	2026-07-14 12:56:42.140103+00	\N
+37	13	1	10	supports	2	\N	2026-07-20 14:04:32.206132+00	\N
+38	13	1	11	weakly_contradicts	-1	\N	2026-07-20 14:04:34.442208+00	2026-07-20 14:04:43.927954+00
+39	13	2	10	supports	2	\N	2026-07-20 14:05:03.042875+00	\N
+40	13	2	11	supports	2	\N	2026-07-20 14:05:04.550326+00	\N
+41	13	3	10	supports	2	\N	2026-07-20 14:05:19.905436+00	\N
+42	13	3	11	weakly_supports	1	\N	2026-07-20 14:05:32.494788+00	\N
+43	13	4	10	weakly_supports	1	\N	2026-07-20 14:05:38.977476+00	\N
+44	13	4	11	supports	2	\N	2026-07-20 14:05:44.431254+00	\N
+45	13	5	10	supports	2	\N	2026-07-20 14:05:53.372375+00	\N
+46	13	5	11	neutral	0	\N	2026-07-20 14:05:55.109915+00	\N
+47	13	6	10	supports	2	\N	2026-07-20 14:05:59.992397+00	\N
+48	13	6	11	contradicts	-2	\N	2026-07-20 14:06:04.922486+00	\N
+49	13	7	10	weakly_supports	1	\N	2026-07-20 14:06:09.973018+00	\N
+50	13	7	11	weakly_supports	1	\N	2026-07-20 14:06:11.84188+00	\N
+51	13	8	10	weakly_contradicts	-1	\N	2026-07-20 14:06:27.825112+00	\N
+52	13	8	11	weakly_supports	1	\N	2026-07-20 14:06:30.084885+00	\N
+53	13	9	10	weakly_supports	1	\N	2026-07-20 14:06:53.17387+00	\N
+54	13	9	11	weakly_supports	1	\N	2026-07-20 14:06:54.568592+00	\N
+55	13	10	10	supports	2	\N	2026-07-20 14:06:59.906687+00	\N
+56	13	10	11	neutral	0	\N	2026-07-20 14:07:09.435258+00	\N
+57	13	11	10	supports	2	\N	2026-07-20 14:07:14.880005+00	\N
+58	13	11	11	contradicts	-2	\N	2026-07-20 14:07:19.787859+00	\N
+59	13	12	10	supports	2	\N	2026-07-20 14:07:27.988079+00	\N
+60	13	12	11	contradicts	-2	\N	2026-07-20 14:07:41.098936+00	\N
+61	13	28	10	neutral	0	\N	2026-07-20 14:08:48.641733+00	\N
+62	13	28	11	neutral	0	\N	2026-07-20 14:08:50.642457+00	\N
+63	14	39	12	supports	2	\N	2026-07-20 14:44:31.251194+00	\N
+64	14	39	13	supports	2	\N	2026-07-20 14:44:33.517046+00	\N
+65	14	40	12	supports	2	\N	2026-07-20 14:44:36.820755+00	\N
+66	14	40	13	supports	2	\N	2026-07-20 14:44:38.124728+00	\N
+76	14	32	13	weakly_contradicts	-1	\N	2026-07-20 14:46:28.04856+00	\N
+68	14	41	13	weakly_supports	1	\N	2026-07-20 14:45:00.783338+00	2026-07-20 14:45:13.28954+00
+67	14	41	12	supports	2	\N	2026-07-20 14:44:44.777678+00	2026-07-20 14:45:20.480773+00
+69	14	29	12	neutral	0	\N	2026-07-20 14:45:37.325994+00	\N
+70	14	29	13	neutral	0	\N	2026-07-20 14:45:40.458485+00	\N
+71	14	30	12	neutral	0	\N	2026-07-20 14:45:48.642352+00	\N
+72	14	30	13	neutral	0	\N	2026-07-20 14:45:49.892993+00	\N
+73	14	31	12	neutral	0	\N	2026-07-20 14:46:04.440805+00	\N
+74	14	31	13	neutral	0	\N	2026-07-20 14:46:05.693333+00	\N
+77	14	33	12	supports	2	\N	2026-07-20 14:46:52.343423+00	\N
+78	14	33	13	weakly_supports	1	\N	2026-07-20 14:46:54.049539+00	\N
+79	14	34	12	neutral	0	\N	2026-07-20 14:47:04.90576+00	\N
+80	14	34	13	weakly_supports	1	\N	2026-07-20 14:47:08.855944+00	\N
+81	14	35	12	supports	2	\N	2026-07-20 14:47:13.039928+00	\N
+82	14	35	13	neutral	0	\N	2026-07-20 14:47:14.838519+00	\N
+83	14	36	12	supports	2	\N	2026-07-20 14:47:18.148881+00	\N
+84	14	36	13	weakly_contradicts	-1	\N	2026-07-20 14:47:36.405728+00	\N
+85	14	37	12	supports	2	\N	2026-07-20 14:47:40.544052+00	\N
+86	14	37	13	contradicts	-2	\N	2026-07-20 14:47:46.208347+00	\N
+87	14	42	12	neutral	0	\N	2026-07-20 14:48:39.574346+00	2026-07-20 14:48:58.67685+00
+88	14	42	13	neutral	0	\N	2026-07-20 14:49:01.006301+00	\N
+89	14	43	12	supports	2	\N	2026-07-20 14:49:07.819924+00	\N
+90	14	43	13	neutral	0	\N	2026-07-20 14:49:19.639024+00	\N
+91	14	44	12	supports	2	\N	2026-07-20 14:49:22.393481+00	\N
+92	14	44	13	contradicts	-2	\N	2026-07-20 14:49:25.133986+00	\N
+94	15	39	15	weakly_supports	1	\N	2026-07-23 19:41:45.203414+00	2026-07-23 19:42:07.698292+00
+95	15	39	16	neutral	0	\N	2026-07-23 19:41:53.85651+00	\N
+93	15	39	14	neutral	0	\N	2026-07-23 19:41:31.453952+00	2026-07-23 19:42:02.376274+00
+96	15	40	14	neutral	0	\N	2026-07-23 19:42:23.570883+00	\N
+97	15	40	15	supports	2	\N	2026-07-23 19:42:31.70097+00	\N
+98	15	40	16	neutral	0	\N	2026-07-23 19:42:38.219796+00	\N
+99	15	41	14	supports	2	\N	2026-07-23 19:43:09.374406+00	\N
+100	15	41	15	weakly_supports	1	\N	2026-07-23 19:43:13.358026+00	\N
+101	15	41	16	contradicts	-2	\N	2026-07-23 19:43:15.312599+00	\N
+102	15	29	14	neutral	0	\N	2026-07-23 19:43:24.975919+00	\N
+103	15	29	15	neutral	0	\N	2026-07-23 19:43:26.676025+00	\N
+104	15	29	16	neutral	0	\N	2026-07-23 19:43:27.115248+00	\N
+105	15	30	14	weakly_supports	1	\N	2026-07-23 19:43:41.311942+00	\N
+106	15	30	15	neutral	0	\N	2026-07-23 19:43:42.500298+00	\N
+107	15	30	16	neutral	0	\N	2026-07-23 19:43:43.456906+00	\N
+108	15	31	14	neutral	0	\N	2026-07-23 19:43:56.447598+00	\N
+109	15	31	15	neutral	0	\N	2026-07-23 19:43:57.516832+00	\N
+110	15	31	16	neutral	0	\N	2026-07-23 19:43:58.306799+00	\N
+111	15	32	14	supports	2	\N	2026-07-23 19:44:05.098551+00	\N
+112	15	32	15	weakly_contradicts	-1	\N	2026-07-23 19:44:10.969773+00	\N
+113	15	32	16	weakly_supports	1	\N	2026-07-23 19:44:16.045814+00	\N
+114	15	33	14	weakly_supports	1	\N	2026-07-23 19:44:32.744684+00	\N
+115	15	33	15	weakly_supports	1	\N	2026-07-23 19:44:38.202657+00	\N
+116	15	33	16	supports	2	\N	2026-07-23 19:44:41.761012+00	\N
+117	15	34	14	neutral	0	\N	2026-07-23 19:44:49.785427+00	\N
+118	15	34	15	supports	2	\N	2026-07-23 19:44:52.903033+00	\N
+119	15	34	16	supports	2	\N	2026-07-23 19:44:56.010426+00	\N
+120	15	35	14	supports	2	\N	2026-07-23 19:45:05.047844+00	\N
+121	15	35	15	contradicts	-2	\N	2026-07-23 19:45:08.765004+00	\N
+169	18	39	20	contradicts	-2	\N	2026-07-26 06:26:24.53333+00	2026-07-26 06:33:49.604463+00
+122	15	35	16	weakly_contradicts	-1	\N	2026-07-23 19:45:12.941362+00	2026-07-23 19:45:15.044585+00
+123	15	36	14	supports	2	\N	2026-07-23 19:45:19.895571+00	\N
+124	15	36	15	weakly_contradicts	-1	\N	2026-07-23 19:45:23.991927+00	\N
+125	15	36	16	weakly_contradicts	-1	\N	2026-07-23 19:45:28.60153+00	2026-07-23 19:45:30.844355+00
+126	15	37	14	supports	2	\N	2026-07-23 19:45:36.883107+00	\N
+127	15	37	15	weakly_contradicts	-1	\N	2026-07-23 19:45:41.925213+00	\N
+128	15	37	16	contradicts	-2	\N	2026-07-23 19:45:47.468061+00	\N
+129	15	42	15	supports	2	\N	2026-07-23 19:45:58.214711+00	\N
+130	15	42	14	neutral	0	\N	2026-07-23 19:46:06.31692+00	\N
+131	15	42	16	neutral	0	\N	2026-07-23 19:46:24.516804+00	\N
+132	15	43	14	weakly_supports	1	\N	2026-07-23 19:46:29.523567+00	\N
+133	15	43	15	weakly_supports	1	\N	2026-07-23 19:46:33.144015+00	\N
+134	15	43	16	neutral	0	\N	2026-07-23 19:46:39.644537+00	2026-07-23 19:46:40.64869+00
+135	15	44	14	supports	2	\N	2026-07-23 19:46:54.112421+00	\N
+136	15	44	16	weakly_supports	1	\N	2026-07-23 19:46:59.357418+00	\N
+168	18	39	19	weakly_supports	1	\N	2026-07-26 06:26:24.167186+00	2026-07-26 06:33:51.753492+00
+137	15	44	15	weakly_contradicts	-1	\N	2026-07-23 19:47:00.86879+00	2026-07-23 19:47:03.353138+00
+138	17	39	17	neutral	0	\N	2026-07-24 22:08:38.762757+00	\N
+139	17	39	18	neutral	0	\N	2026-07-24 22:08:43.331273+00	\N
+140	17	40	17	neutral	0	\N	2026-07-24 22:08:55.848007+00	\N
+141	17	40	18	neutral	0	\N	2026-07-24 22:08:57.63844+00	\N
+142	17	41	17	weakly_supports	1	\N	2026-07-24 22:09:09.263343+00	\N
+143	17	41	18	neutral	0	\N	2026-07-24 22:09:14.324376+00	\N
+144	17	29	17	neutral	0	\N	2026-07-24 22:09:29.0851+00	\N
+145	17	29	18	neutral	0	\N	2026-07-24 22:09:32.469616+00	2026-07-24 22:09:48.611426+00
+146	17	30	17	neutral	0	\N	2026-07-24 22:09:53.681548+00	\N
+147	17	30	18	neutral	0	\N	2026-07-24 22:09:55.165535+00	\N
+148	17	31	17	neutral	0	\N	2026-07-24 22:10:02.367979+00	\N
+149	17	31	18	weakly_supports	1	\N	2026-07-24 22:10:03.169377+00	2026-07-24 22:10:04.510531+00
+150	17	32	17	neutral	0	\N	2026-07-24 22:10:26.438036+00	\N
+151	17	32	18	neutral	0	\N	2026-07-24 22:10:28.728487+00	\N
+152	17	33	17	neutral	0	\N	2026-07-24 22:10:53.482567+00	\N
+153	17	33	18	supports	2	\N	2026-07-24 22:10:54.955872+00	2026-07-24 22:10:58.552303+00
+154	17	34	17	neutral	0	\N	2026-07-24 22:11:05.396883+00	2026-07-24 22:11:08.28238+00
+155	17	34	18	neutral	0	\N	2026-07-24 22:11:10.228915+00	\N
+156	17	35	17	weakly_supports	1	\N	2026-07-24 22:11:13.391441+00	\N
+157	17	35	18	weakly_supports	1	\N	2026-07-24 22:11:16.597585+00	\N
+158	17	36	17	weakly_supports	1	\N	2026-07-24 22:11:24.361144+00	\N
+159	17	36	18	weakly_supports	1	\N	2026-07-24 22:11:25.992047+00	\N
+160	17	37	17	supports	2	\N	2026-07-24 22:11:30.158608+00	\N
+161	17	37	18	neutral	0	\N	2026-07-24 22:11:33.306715+00	\N
+162	17	42	17	neutral	0	\N	2026-07-24 22:11:37.875867+00	\N
+163	17	42	18	neutral	0	\N	2026-07-24 22:11:41.259873+00	\N
+164	17	43	18	weakly_supports	1	\N	2026-07-24 22:11:48.235486+00	\N
+165	17	43	17	weakly_supports	1	\N	2026-07-24 22:11:49.337651+00	\N
+166	17	44	17	weakly_supports	1	\N	2026-07-24 22:12:00.158689+00	\N
+167	17	44	18	weakly_supports	1	\N	2026-07-24 22:12:01.361421+00	\N
+184	18	34	19	neutral	0	\N	2026-07-26 06:36:09.477704+00	\N
+170	18	40	19	supports	2	\N	2026-07-26 06:26:54.097714+00	\N
+171	18	40	20	contradicts	-2	\N	2026-07-26 06:27:01.04136+00	2026-07-26 06:27:02.724216+00
+172	18	41	19	contradicts	-2	\N	2026-07-26 06:30:01.021744+00	\N
+173	18	41	20	contradicts	-2	\N	2026-07-26 06:30:05.986558+00	\N
+175	18	29	20	neutral	0	\N	2026-07-26 06:34:52.109646+00	\N
+174	18	29	19	weakly_supports	1	\N	2026-07-26 06:34:47.633454+00	2026-07-26 06:34:58.639193+00
+176	18	30	19	weakly_supports	1	\N	2026-07-26 06:35:11.164674+00	\N
+177	18	30	20	weakly_supports	1	\N	2026-07-26 06:35:13.523401+00	\N
+178	18	31	19	weakly_supports	1	\N	2026-07-26 06:35:23.400682+00	\N
+179	18	31	20	weakly_supports	1	\N	2026-07-26 06:35:25.102716+00	\N
+180	18	32	19	supports	2	\N	2026-07-26 06:35:37.196664+00	\N
+181	18	32	20	weakly_supports	1	\N	2026-07-26 06:35:39.321017+00	\N
+182	18	33	19	supports	2	\N	2026-07-26 06:35:54.437245+00	\N
+183	18	33	20	weakly_supports	1	\N	2026-07-26 06:35:55.849355+00	\N
+185	18	34	20	neutral	0	\N	2026-07-26 06:36:17.446092+00	\N
+187	18	35	19	contradicts	-2	\N	2026-07-26 06:36:31.085936+00	\N
+186	18	35	20	supports	2	\N	2026-07-26 06:36:28.828101+00	2026-07-26 06:36:32.838164+00
+188	18	36	19	contradicts	-2	\N	2026-07-26 06:36:43.946019+00	\N
+189	18	36	20	supports	2	\N	2026-07-26 06:36:46.039975+00	\N
+190	18	37	19	neutral	0	\N	2026-07-26 06:37:04.894254+00	2026-07-26 06:37:57.413047+00
+191	18	37	20	weakly_supports	1	\N	2026-07-26 06:37:06.671106+00	2026-07-26 06:37:58.461496+00
+192	18	42	19	weakly_supports	1	\N	2026-07-26 06:38:10.442011+00	\N
+193	18	42	20	supports	2	\N	2026-07-26 06:38:12.333695+00	\N
+194	18	43	19	contradicts	-2	\N	2026-07-26 06:38:28.818162+00	\N
+195	18	43	20	supports	2	\N	2026-07-26 06:38:31.235324+00	\N
+196	18	44	19	neutral	0	\N	2026-07-26 06:38:46.824024+00	\N
+197	18	44	20	neutral	0	\N	2026-07-26 06:38:48.250274+00	\N
+\.
+
+
+--
+-- Data for Name: evidence_items; Type: TABLE DATA; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+COPY public.evidence_items (id, case_id, label, description, file_path, is_contradictory_by_design, created_at) FROM stdin;
+1	1	Item 1: Scene photograph - body position	The deceased (male, approx. 38 years old) is found face-down on the living room floor near the sofa. His left arm is extended outward; his right arm is tucked beneath his torso. No visible trauma to the head or neck from this angle. He is fully clothed in casual home attire.	\N	f	2026-06-28 20:31:32.695681+00
+2	1	Item 2: Toxicology report (preliminary)	Preliminary toxicology screen indicates the presence of a central nervous system depressant consistent with benzodiazepines at a blood concentration of 0.48 mg/L. The therapeutic range for common benzodiazepines is 0.05–0.25 mg/L. This level is approximately double the upper therapeutic threshold.	\N	f	2026-06-28 20:32:02.801008+00
+3	1	Item 3: Prescription medication bottle	A prescription bottle of diazepam (10mg tablets, 30-count) was found on the kitchen counter. It was dispensed 6 days ago. 24 tablets remain. The prescribed dosage is one tablet daily. Based on fill date and dosage, approximately 6 tablets should have been consumed; 24 remaining suggests only 6 have been taken, consistent with prescribed use.	\N	t	2026-06-28 20:32:30.820086+00
+4	1	Item 4: Unlabeled pill packets	Two unlabeled foil blister packs were found inside a coat pocket hanging near the front door. Each pack contains 10 round white tablets. Laboratory analysis confirms the tablets are diazepam 10mg - identical in composition to the prescribed medication but with no dispensing label or patient information.	\N	f	2026-06-28 20:32:52.429343+00
+5	1	Item 5: Text message exchange (deceased's phone)	A text exchange recovered from the deceased's mobile phone, timestamped 9 hours before estimated time of death. The deceased sent: 'I can't keep doing this. I'm exhausted and I don't see a way out.' The recipient (contact saved as 'Dan') replied: 'Call me. Please.' No further messages were sent or received.	\N	f	2026-06-28 20:33:13.6895+00
+6	1	Item 6: Handwritten note	A folded handwritten note was found under the deceased's mobile phone on the coffee table. It reads: 'I've sorted the flat. The keys are with Mrs. Patel next door. Don't let Mum find out this way.' The handwriting has been confirmed as the deceased's. No signature.	\N	f	2026-06-28 20:33:34.914973+00
+7	1	Item 7: GP medical records (last 18 months)	Records indicate the deceased was diagnosed with generalized anxiety disorder 14 months ago and prescribed diazepam. He attended three follow-up appointments. The most recent appointment note (7 weeks ago) reads: 'Patient reports improved sleep and reduced anxiety episodes. Continuing current prescription. No concerns raised.' No referral to psychiatric services. No documented suicidal ideation.	\N	t	2026-06-28 20:34:04.126673+00
+8	1	Item 8: Witness statement - neighbor (Mrs. Patel)	Mrs. Patel (age 61, adjacent flat) states she saw the deceased at approximately 18:30 the previous evening taking his recycling out. She describes him as 'cheerful and chatty as always and that he mentioned he was looking forward to a quiet evening in.' She heard nothing unusual during the night. She discovered him at 08:15 when he did not respond to a knock she made to return a parcel.	\N	t	2026-06-28 20:34:28.990838+00
+9	1	Item 9: Financial records summary	Bank statements show the deceased had recently received a significant insurance payout (£47,000) credited 3 weeks prior to death. He had made two large payments: £18,500 to a funeral planning company and £12,000 described as 'estate legal fees'. No unusual withdrawals or debts identified. His account was not in overdraft.	\N	f	2026-06-28 20:34:48.479068+00
+10	1	Item 10: Empty alcohol container	A 70cl bottle of whisky (brand: Glenfiddich 12-year) was found on the coffee table, approximately one-third remaining. A single glass beside it showed residue consistent with whisky. Post-mortem blood alcohol level was 0.09% - above the legal driving limit but not in a range typically considered severely intoxicating for a regular drinker.	\N	f	2026-06-28 20:35:07.702862+00
+11	1	Item 11: Internet browser history	The deceased's laptop browser history shows that 11 days before death he searched: 'diazepam lethal dose', 'how many diazepam to overdose', and 'diazepam with alcohol effects'. These searches lasted approximately 4 minutes total. No further related searches were found in subsequent days.	\N	f	2026-06-28 20:35:27.201159+00
+12	1	Item 12: Post-mortem report (summary)	Cause of death: mixed drug toxicity - combined benzodiazepine and alcohol intoxication leading to respiratory depression. No signs of physical struggle, defensive wounds, restraint marks, or third-party involvement. No head trauma. Stomach contents consistent with ingestion of tablets and alcohol within 2–3 hours of death. Time of death estimated between 22:00 and 02:00.	\N	f	2026-06-28 20:35:43.296991+00
+39	2	Item 10: Scene examination report - Flat 4, 14 Morwell Gardens (10 March 2025)	EXAMINATION DATE: 10 March 2025. Premises examined with consent of flat mate and landlord following the missing persons report.\r\n\r\nFINDINGS:\r\n  1. MARA VOSS'S BEDROOM: Bed made. Clothing hanging in wardrobe - no obvious gaps consistent with packing. Passport (British, valid until 2029) found in bedside drawer. Laptop (MacBook Air) found open on desk, screen locked. A small notebook found beside the laptop containing handwritten notes - partially legible, includes the phrase 'K says it will be clean' and a date: '7 March.' A torn envelope addressed to M. Voss from 'ATLAS TRAVEL' was found in the wastepaper basket - no enclosure recovered.\r\n  2. KITCHEN: One unwashed mug on the draining board. No signs of disturbance.\r\n  3. COMMUNAL HALLWAY: No signs of disturbance. No evidence of forced entry at any point.\r\n\r\nCONCLUSION: The scene is not consistent with a struggle or forced removal from the premises. The retained passport and laptop are noted as items of investigative significance. The notebook entry ('K says it will be clean') and the torn Atlas Travel envelope are items of investigative interest requiring further enquiry.	\N	f	2026-07-20 10:42:03.250109+00
+40	2	Item 11: Financial intelligence report - Mara Voss bank accounts (DC S. Okonkwo)	PREPARED BY: DC Sarah Okonkwo, Financial Intelligence Unit, Southgate Borough CID.\r\n\r\nANALYSIS PERIOD: 1 January 2025 - 9 March 2025.\r\n\r\nKEY FINDINGS:\r\n  1. On 3 March 2025, Mara Voss transferred £2,400 from her current account to an account held in the name of ATLAS TRAVEL LTD. This account has been confirmed as a legitimate registered travel agency. No corresponding booking confirmation was found on her email or devices at time of examination (device data is limited by the cloud backup cutoff date of 06 March 2025).\r\n  2. On 7 March 2025 at 22:19, £120 was withdrawn via ATM on Morwell High Street (confirmed by Item 2 - CCTV). This was the maximum permitted single-transaction withdrawal under her account settings.\r\n  3. No further account activity after 22:19 on 7 March 2025.\r\n  4. Mara Voss had no significant debts, no overdraft, and no irregular prior transaction patterns. Her salary (£2,850/month net, Holt & Partners Solicitors) was paid regularly.\r\n\r\nINTERPRETATION: The £2,400 transfer to a travel agent four days before her disappearance, combined with the maximum ATM cash withdrawal on the evening of her disappearance, is financially consistent with planned travel. However, the absence of a booking confirmation and the retention of her passport complicate this interpretation significantly.	\N	t	2026-07-20 10:43:06.162913+00
+41	2	Item 12: Witness statement - Jayden Osei (ex-partner, voluntary attendee)	WITNESS: Mr Jayden Osei, age 33. Ex-partner of Mara Voss. Relationship ended November 2024. Statement provided voluntarily (not under caution) on 11 March 2025.\r\n\r\nSTATEMENT SUMMARY: Mr Osei states his last contact with Mara Voss was a phone call on 7 March 2025 at 17:30 (confirmed by Item 3), during which she told him to 'stop calling.' He states he did not see her on 7 March 2025 and was at home alone from approximately 20:00 onwards. He cannot provide any corroborating alibi for this period.\r\n  He denies sending threatening messages and states his WhatsApp messages (Item 5) were 'taken out of context - I was upset, not threatening.' He denies attending her workplace or flat in a harassing manner and describes his visits as 'checking she was okay.' He appears visibly upset during the interview and volunteers that he is 'worried about her.'\r\n  He provides a DNA reference sample voluntarily.\r\n\r\nLABORATORY RESULT: Analysis of Osei's DNA reference sample confirms his profile does NOT match the minor male contributor identified on the drinking glass rim (Item 7). He can be excluded as the source of the male DNA on the glass.\r\n\r\nPHYSICAL DESCRIPTION (for comparison with Item 8): Mr. Osei is described by the interviewing officer as slim build, approximately 5'9" tall. This description is inconsistent with the male observed on CCTV at The Anchor (heavy build, 6'1"–6'3" - Item 8).	\N	t	2026-07-20 10:44:19.005447+00
+28	1	Testing Cloudinary	N/A	https://res.cloudinary.com/j4k6heco/image/upload/v1784542890/forensic-recon/case_1/stream_dfzuw9.jpg	f	2026-07-20 10:21:29.107626+00
+29	2	Item 1: CCTV still - Mara Voss departing flat (22:04)	A still image extracted from the communal hallway CCTV camera at 14 Morwell Gardens at 22:04 on Friday 7 March 2025. The image shows a female matching the description of Mara Voss (age 31, 5'4", medium build, dark curly hair) departing through the communal entrance. She is wearing a dark green parka jacket, blue jeans, and white trainers. She is carrying a small crossbody bag (black). She does not appear distressed. She is not accompanied. She did not return through this entrance at any subsequent point captured on the recording. The recording covers the period 00:00–23:59 on 7 March 2025.	https://res.cloudinary.com/j4k6heco/image/upload/v1784543352/forensic-recon/case_2/stream_j92uuj.jpg	f	2026-07-20 10:29:11.890359+00
+30	2	Item 2: CCTV still - Mara Voss at ATM (22:19)	A still image extracted from ATM-mounted CCTV at Barclays Bank, Morwell High Street, at 22:19 on 7 March 2025. The image shows the same female (consistent with Item 1 in clothing and physical description) withdrawing cash. Transaction records confirm £120 was withdrawn from an account in the name of M. VOSS at this ATM at 22:19. The withdrawal was the maximum single-transaction amount permitted under her account settings. She appears calm and is not accompanied. She looks directly at the ATM screen throughout and does not look around or behind her.	https://res.cloudinary.com/j4k6heco/image/upload/v1784543389/forensic-recon/case_2/stream_nviiku.jpg	t	2026-07-20 10:29:49.110689+00
+31	2	Item 3: Phone records - Mara Voss (EE Network, last 72 hours)	Records obtained from Mara Voss's mobile network provider (EE) covering the 72-hour period prior to her last known sighting.\r\n\r\nKEY ENTRIES:\r\n  05 March 2025, 19:42 - Outgoing call to 'JAYDEN' (Jayden Osei, ex-partner), duration 14 minutes 33 seconds.\r\n  06 March 2025, 08:17 - Incoming call from JAYDEN, duration 3 minutes 11 seconds.\r\n  06 March 2025, 22:51 - Incoming call from WITHHELD number, duration 6 minutes 49 seconds.\r\n  07 March 2025, 09:03 - Outgoing call to 'PRIYA' (flat mate, Priya Sharma), duration 22 minutes 08 seconds.\r\n  07 March 2025, 17:30 - Incoming call from JAYDEN, duration 1 minute 02 seconds.\r\n  07 March 2025, 21:55 - Outgoing call to WITHHELD number, duration 4 minutes 12 seconds.\r\n  07 March 2025, 22:03 - Last recorded network activity. Phone last pinged a mast on Morwell High Street at 22:47. No further activity recorded.\r\n\r\nNOTE: The withheld number is the subject of an outstanding telecommunications request.	https://res.cloudinary.com/j4k6heco/image/upload/v1784543500/forensic-recon/case_2/stream_dqcmow.jpg	f	2026-07-20 10:30:43.01582+00
+32	2	Item 4: Witness statement - Priya Sharma (flat mate, reporting party)	WITNESS: Ms. Priya Sharma, age 28. Flat mate and close friend of Mara Voss. Reported her missing on 9 March 2025 after she failed to return home and contact ceased.\r\n\r\nSTATEMENT SUMMARY: Ms. Sharma states Mara appeared 'stressed and distracted' in the two weeks prior to her disappearance but declined to discuss what was bothering her. On 7 March, Mara told her she was 'going to meet someone' but did not say who. She left at approximately 22:00. Ms. Sharma states that in January 2025, Mara confided that her ex-partner Jayden Osei had 'been turning up places' and that she was 'a bit scared of him.' She did not elaborate further.\r\nMs. Sharma states Mara had never mentioned wanting to leave or go away. She has no knowledge of Mara having any reason to disappear voluntarily. She found Mara's passport, a small amount of cash (£45), and her laptop still in her room when she reported her missing.\r\n\r\nRELEVANCE: The retained passport and laptop are significant - Mara could not have boarded an international flight without her passport. Their presence contradicts planned international travel but is consistent with either a rushed departure or transportation by a third party.\r\n	\N	t	2026-07-20 10:32:38.712773+00
+33	2	Item 5: Digital forensics - WhatsApp message threads (cloud backup, to 06/03/2025)	DATA SOURCE: WhatsApp cloud backup recovered from Mara Voss's Google account (with next-of-kin consent). Backup dated 06 March 2025 23:59 - covers up to the evening before her disappearance.\r\n\r\nTHREAD: JAYDEN (Jayden Osei)\r\n  Mara (04 March, 21:14): 'I need you to stop. I've told you I don't want contact.'\r\n  Jayden (04 March, 21:22): 'I just want to talk. You owe me that.'\r\n  Jayden (04 March, 23:45): 'Fine. Have it your way. Don't say I didn't try.'\r\n  Mara (05 March, 08:02): 'Please leave me alone.'\r\n  Jayden (05 March, 08:44): 'You'll regret this.'\r\n\r\nTHREAD: UNKNOWN CONTACT SAVED AS 'K'\r\n  Mara (02 March, 18:30): 'Is the offer still open?'\r\n  'K' (02 March, 18:41): 'Yes. When you're ready.'\r\n  Mara (06 March, 20:15): 'I think I'm ready. Can we meet Friday?'\r\n  'K' (06 March, 20:22): 'Friday works. I'll send the details.'\r\n\r\nTHREAD: PRIYA (Priya Sharma)\r\n  Mara (07 March, 09:03): 'Don't worry about me. I just need some time to sort my head out.'\r\n  Priya (07 March, 09:05): 'You're scaring me. What's going on?'\r\n  Mara (07 March, 09:07): 'I'll explain everything soon. I promise.'\r\n\r\nNOTE: The identity of contact 'K' is currently unknown. Enquiries are ongoing.	https://res.cloudinary.com/j4k6heco/image/upload/v1784543671/forensic-recon/case_2/stream_e0msds.jpg	f	2026-07-20 10:34:10.34233+00
+34	2	Item 6: DASH Risk Assessment Form - MPS-DASH-2025-0189 (18 January 2025)	DOCUMENT TYPE: Domestic Abuse, Stalking and Honour-Based Violence (DASH) Risk Assessment Form. Reference: MPS-DASH-2025-0189. Date: 18 January 2025. Completing officer: PC Amara Oduya, Response Team, Southgate Borough.\r\n\r\nCIRCUMSTANCES: Mara Voss attended Southgate Police Station on 18 January 2025 and reported that her ex-partner Jayden Osei had attended her workplace (Holt & Partners Solicitors, Morwell Street) uninvited on three occasions since their relationship ended in November 2024. She also reported that he had attended outside her flat building on two occasions. She did not wish to make a formal complaint at that time.\r\n\r\nDASH SCORE: 14 - MEDIUM RISK (threshold: 10+ = Medium, 17+ = High).\r\n\r\nNOTED RISK FACTORS: Escalating contact attempts; prior incident of property damage (phone screen smashed during argument, November 2024, not formally reported); subject expresses fear of respondent; no children involved; no weapons history.\r\n\r\nACTION TAKEN: Jayden Osei spoken to informally by PC Oduya on 22 January 2025. He denied the allegations and stated the contact was 'mutual.' No further action taken at time of referral. Referral made to IDVA (Independent Domestic Violence Adviser) service - subject did not attend scheduled appointment (10 February 2025).	https://res.cloudinary.com/j4k6heco/image/upload/v1784543743/forensic-recon/case_2/stream_gnxkcw.jpg	f	2026-07-20 10:35:43.203357+00
+35	2	Item 7: Toxicology report - drinking vessel, The Anchor PH (FSL Ref: FSL-2025-0892)	ITEM EXAMINED: One glass tumbler (pint glass, clear, no branding) recovered from a table at The Anchor public house, Morwell High Street, following a report by bar staff that it had been left at a table where a woman matching Mara Voss's description had been sitting on the evening of 7 March 2025. Glass recovered and sealed at 23:40 on 7 March 2025 by DC Femi Adeyemi.\r\n\r\nANALYSIS METHOD: Residue tested for drug-facilitated sexual assault (DFSA) substances using GC-MS.\r\n\r\nFINDINGS: Gamma-hydroxybutyrate (GHB) detected in residue at a concentration consistent with a therapeutic/recreational dose administered to a standard drink. GHB is a controlled substance (Class C, Misuse of Drugs Act 1971) with a well-documented history of use in drink-spiking offences. It is colorless and odorless in liquid form.\r\n\r\nFINGERPRINT AND DNA: A partial fingerprint (latent, Grade 2) was identified on the exterior of the glass - insufficient for standalone identification but suitable for comparison. DNA swabbing of the rim yielded two contributors: a major contributor profile matching Mara Voss (reference sample provided by next of kin); a minor contributor (male, Y-STR profile obtained - insufficient for database identification without a comparator sample).\r\n\r\nINTERPRETATION (analyst): Findings are consistent with GHB having been added to the drink of the person whose DNA was recovered from the glass rim. This does not confirm that Mara Voss consumed GHB - it confirms that GHB was present in a vessel bearing her DNA.	https://res.cloudinary.com/j4k6heco/image/upload/v1784543822/forensic-recon/case_2/stream_nyvzyg.jpg	f	2026-07-20 10:37:01.809442+00
+36	2	Item 8: CCTV still - The Anchor PH exterior (22:38) - TWO FIGURES	A still image extracted from the external CCTV camera mounted above the entrance of The Anchor public house, Morwell High Street, timestamped 22:38 on 7 March 2025.\r\nThe image shows a female consistent in clothing and physical description with Mara Voss (dark green parka, blue jeans, white trainers, black crossbody bag) exiting the pub. She appears unsteady on her feet - she is holding the door frame with one hand as she exits.\r\nShe is accompanied by a male described as: approximately 35–45 years of age, 6'1"–6'3" tall, heavy build, short dark hair, wearing a dark navy or black fleece jacket and dark trousers. The male is holding her by the upper arm. Both walk out of frame to the left (westbound along Morwell High Street).\r\nThe male's face is partially obscured by the camera angle and low-light conditions. An image enhancement request has been submitted to the Digital Intelligence Unit and is currently outstanding.\r\n\r\nNO FURTHER COVERAGE: CCTV enquiries along the westbound route from The Anchor have not identified further camera coverage showing Mara Voss or the male after 22:38.	https://res.cloudinary.com/j4k6heco/image/upload/v1784543887/forensic-recon/case_2/stream_e1hidv.jpg	f	2026-07-20 10:38:06.916901+00
+37	2	Item 9: Witness statement - Daniel Ferris (bar staff, The Anchor PH)	WITNESS: Mr. Daniel Ferris, age 24. Bar staff at The Anchor public house, Morwell High Street.\r\n\r\nSTATEMENT SUMMARY: Mr. Ferris states a woman matching Mara Voss's description entered the pub alone at approximately 22:20–22:25 on 7 March 2025. She ordered a soft drink (Diet Coke). She sat at a table near the window. Approximately 10–15 minutes later, a man joined her. Mr. Ferris describes the man as tall, heavy build, dark hair, mid-thirties to mid-forties, wearing a dark fleece or jacket. He ordered two drinks at the bar - a pint of lager and what Mr. Ferris believes was another soft drink.\r\n  Mr. Ferris states he noticed the woman 'looked a bit off' approximately 20–25 minutes after the man arrived - she appeared 'glassy-eyed' and was leaning forward on the table. He considered asking if she was alright but served another customer first. When he looked again, both had left.\r\n  Mr. Ferris states he did not recognize either individual as a regular customer. He was not able to provide further identification of the male beyond the physical description above.	\N	f	2026-07-20 10:39:22.723091+00
+42	2	Item 13: Atlas Travel booking confirmation - Ref AT-2025-0384 (Production Order)	DOCUMENT: Booking confirmation obtained directly from Atlas Travel Ltd by DC Okonkwo under a Production Order (PACE 1984, s.9). Document reference: AT-2025-0384.\r\n\r\nBOOKING DETAILS:\r\n  Passenger name: MARA ELIZABETH VOSS\r\n  Route: London Heathrow (LHR) → Tbilisi International (TBS), Georgia\r\n  Flight: British Airways BA2874\r\n  Departure: 15 March 2025, 06:30 (Terminal 5)\r\n  Arrival: Tbilisi, 13:15 local time\r\n  Ticket type: ONE-WAY - no return booked\r\n  Class: Economy\r\n  Payment: Bank transfer received 03 March 2025, £2,400\r\n  Booking reference: AT-2025-0384\r\n\r\nNOTES FROM ATLAS TRAVEL STAFF RECORD: Booking was made by telephone on 3 March 2025. Customer requested a one-way fare with no return. Customer requested no email correspondence - postal only. Staff member note states: 'Customer did not provide passport number at time of booking (standard for telephone bookings).'\r\n  Torn envelope found in Mara's wastepaper basket (Item 10) is consistent with this booking confirmation having been received and discarded.\r\n\r\nBRITISH AIRWAYS / BORDER FORCE: Records confirm flight BA2874 on 15 March 2025 was operated as scheduled. Passenger manifest data is the subject of a separate Border Force enquiry currently outstanding.	https://res.cloudinary.com/j4k6heco/image/upload/v1784544334/forensic-recon/case_2/stream_igwfo2.jpg	f	2026-07-20 10:45:34.551665+00
+43	2	Item 14: Cell site analysis - Mara Voss mobile device (DC S. Okonkwo / Forensic Telecom Services Ltd)	PREPARED BY: DC Sarah Okonkwo, Digital Intelligence Unit, with cell site analysis by Forensic Telecom Services Ltd.\r\n\r\nFINDINGS:\r\n  1. 22:03 - Phone pinged mast on Morwell High Street. Consistent with location at or near The Anchor public house.\r\n  2. 22:47 - Phone pinged mast covering Morwell High Street / Station Road junction, approximately 400 meters west of The Anchor. Consistent with movement toward Morwell Underground Station (District/Circle line).\r\n  3. 23:11 - Phone pinged mast covering the area of Heathrow Terminal 5 / Hatton Cross. This mast covers both the terminal complex and surrounding residential and road network areas.\r\n  4. No further pings recorded after 23:11. The phone was either switched off, placed in flight mode, or destroyed/discarded after this point.\r\n\r\nMOVEMENT SUMMARY: The ping sequence traces a westbound movement from Morwell High Street toward the Heathrow area over approximately 68 minutes - consistent with travel by Underground and/or road. The Heathrow ping does NOT confirm boarding a flight. The phone may have been carried by the unidentified male observed in Item 8 rather than by Mara Voss herself.\r\n\r\nOUTSTANDING: ANPR data for Morwell High Street and westbound routes on 7 March 2025 (22:30–23:30) has been requested and is currently outstanding.	https://res.cloudinary.com/j4k6heco/image/upload/v1784544422/forensic-recon/case_2/stream_ofca6k.jpg	t	2026-07-20 10:47:02.503652+00
+44	2	Item 15: Vehicle sighting - Mr. Patrick Hsu, Morwell High Street (unsolicited intelligence)	SOURCE: Unsolicited intelligence log submitted by Mr. Patrick Hsu, age 41, resident of Morwell High Street, following a public appeal for information broadcast on 14 March 2025.\r\n\r\nSTATEMENT SUMMARY: Mr. Hsu states that at approximately 22:40–22:45 on 7 March 2025, he observed from his first-floor flat window a dark-colored vehicle (described as a large SUV or 4x4, possibly dark blue or black) parked on double yellow lines on Morwell High Street, approximately 30 meters west of The Anchor public house. He states he noticed it because it was parked illegally and had its engine running.\r\n  He observed a female being assisted into the rear passenger seat by a male. He describes the female as appearing unsteady. The male then entered the driver's seat and the vehicle departed westbound. He did not see the registration plate clearly but believes it may have begun with 'LK' or 'LR.' He did not report this at the time as he 'assumed she had had too much to drink and her friend was helping her home.'\r\n\r\nCONSISTENCY WITH OTHER EVIDENCE: The timing (22:40–22:45) is consistent with CCTV Item 8 (22:38 - two figures exit pub westbound). The vehicle description and direction of travel are consistent with cell site data (Item 14 - phone moving westbound from 22:47).\r\n\r\nVEHICLE ENQUIRIES: ANPR data for Morwell High Street on 7 March 2025 between 22:30–23:00 has been requested and is currently outstanding.	\N	f	2026-07-20 10:48:17.663343+00
+\.
+
+
+--
+-- Data for Name: final_reconstructions; Type: TABLE DATA; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+COPY public.final_reconstructions (id, session_id, selected_hypothesis_id, final_narrative, final_confidence, accuracy_score, scored_by, scored_at, created_at) FROM stdin;
+1	4	6	The victim planned on taking his own life at least 3 weeks prior to his death, he took out an insurance payout and took care of his finances, flat and own funeral plan. The victim research lethal doses of the medication he was presrcibed and aquired an excess amount without his doctors approval. The victim wrote a note and left a message to 'Dan' to say his final goodbyes and using his knowledge from his internet search the victim used a combination of benzodiazepine and alcohol to end his own life, leaving the door unlocked for someone to find him.	80	\N	\N	\N	2026-07-14 13:14:16.659799+00
+2	13	10	Mr Mercer prepared his flat for his suicide - took the rubbish out and left the note on the table. At some point previously he had also arranged for the keys to be left with Mrs Patel. Later, Mr Mercer messaged Dan about his emotional state. Having researched the lethal dose of the drug and the effects of being mixed with alcohol weeks prior, Mr Mercer took the lethal dosage of the drug. He then passed out and fell on the ground in front of the sofa. 	65	\N	\N	\N	2026-07-20 14:19:07.137327+00
+3	14	12	Mara was in contact with the unknown individual and agreed to meet him. At the pub this individual spiked her drink and put her in his vehicle. The hypothesis is strongly supported by witness statements, CCTV, drug analysis, and text messages. 	99	\N	\N	\N	2026-07-20 14:55:20.862774+00
+4	15	14	Mara intentionally met with K on the 7th March, as shown by her whatsapp records (item 5). It seems like they had a plan together or at least Mara was asking K for a service as "she stated she was ready". Mara then withdrew money before meeting with K the same day (item 2), perhaps wanting to pay him for his service. Then proceeded to head to the pub order a soft drink then wait for him by the window (item 9). K who had intentions of leaving the pub quickly, as he did not turn his car engine off (item 15), then heads into the bar, orders two drinks, one which was drugged and drank by Mara (item 7). They both then leave the pub leaving by the same car that was driven there and headed west towards Heathrow airport. The drugging and kidnapping must not have been what Mara agreed to otherwise she wouldn't have needed to be drugged, additionally she only ordered a soft drink so couldn't have been intoxicated.  Her phone was also intentionally switched off after 23:11pm probably by K as she was barely conscious before that, suggesting he must not want her location to be known. 	90	\N	\N	\N	2026-07-23 19:56:33.710559+00
+5	17	18	Mara was in contact with "K" who is believed to be the male she was sighted with on the day of her disappearance. Mara went to see "K" to help her sort some things out as she had mentioned to her housemate previously? Mara was having problems with her ex which may be why she wanted to get away for a while with this "K" individual. Mara went drinking with "K" and also took some substances as a coping mechanism. She was drunk and possibly high when she left with "K", resultoing in her phone being dropped and smashed at some point. Either that or she switched her phone off purposefully to prevent her ex from further contacting her with threatening messages as she needed a break from everything. A one-way flight was booked for the week following her dissapearance which supports the idea that she left to do something before planning on leaving for good. Maybe she had some loose ends to tie up or something. If the identity of K could be confirmed, it might allow insight into what Mara actually was doing with him, however without this extra information, this all remains speculative at best.	75	\N	\N	\N	2026-07-24 22:20:13.509538+00
+6	18	20	She was lured by K under a pretense she believed was legitimate, and was drugged and abducted by an unidentified male at The Anchor, with the travel booking serving as a cover story rather than a genuine plan.	86	\N	\N	\N	2026-07-26 06:40:41.929754+00
+\.
+
+
+--
+-- Data for Name: hypotheses; Type: TABLE DATA; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+COPY public.hypotheses (id, session_id, title, description, initial_confidence, current_confidence, abandoned_at, is_retained_at_final, bayesian_prior, created_at) FROM stdin;
+2	1	the injury wasn't self-inflicted	testing mode	50	50	\N	t	\N	2026-06-28 20:58:37.236342+00
+3	1	the injury wasn't self-inflicted	testing mode	50	50	\N	t	\N	2026-06-28 20:59:06.134035+00
+17	17	Random male abducted Mara	Mara was drugged and abducted by an unknown male individual. The build and DNA profile of individual is not consistent with Mara's ex therefore he can be excluded as a potential suspect. 	50	50	\N	t	\N	2026-07-24 22:02:17.862861+00
+4	3	cause of death: suicide (potential)	toxicology reported a double dosage of benzodiazepines (over recommended dosage) + alcohol consumption. 	50	62	\N	t	\N	2026-07-13 19:11:14.838674+00
+5	3	Murder disguised as a suicide	 The most recent appointment note (7 weeks ago) reads: 'Patient reports improved sleep and reduced anxiety episodes. Continuing current prescription. No concerns raised.' No referral to psychiatric services. No documented suicidal ideation.	47	47	\N	t	\N	2026-07-13 19:12:58.634347+00
+18	17	Mara was not abducted	Mara was going through some personal issues and so willingly took some illicit substances as a coping mechanism. The unknown male did not drug or abduct her. He was instead helping her, and they may have even been friends. Unknown male could potentially be "k". Mara was drunk and potentially high when leaving with the unknown male and may have dropped and smashed her phone at the point where connection with it was lost. Either that or her phone died. She texted her housemate insinuating there was something she had to do which may be where the unknown male comes in.	50	50	\N	t	\N	2026-07-24 22:07:52.316438+00
+6	4	Death ruled as suicide	The victim was diagnosed with anxiety and has been taking medication for it for approximatley 14 months. The victims post mortem report states stomach contents is consistent with ingestion of tablets and alcohol 2-3 hours before death. The victim showed interest in lethal dosages of his medication and its effects with alcohol from his search history and was in possession of excess diazepam tablets NOT presecribed by his doctor. Victim left a note and a concerning text message hours befor his death. The victim also took out a substatial insurance payout and made two large payments, one to a funeral planning company and one described as estate legal fees which aligns with the note left in his handwritng saying 'ive sorted the flat'. This looks like a planned suicide that has been in place for a few weeks before his death. There is no evidence suggesting foul play, no evidence of forced entry and no signs of a disturbance or physical struggle.	90	90	\N	t	\N	2026-07-14 12:41:28.707554+00
+7	4	The victims death was suspicious	GP records state there were no concerns raised and no presence of suicidal ideation. Furthermore the witness statement provided by the neighbour describes him as cheerful just a few hours before his death. Alcohol level was not severe, pointing to a more casual, harmless drink. Could be possible he was forced/threatened to take pills or consumed them without knowledge by somone placiing them in his drink.	20	20	\N	t	\N	2026-07-14 12:51:55.848185+00
+10	13	Suicide 	Mr Mercer decided to commit suicide by taking a drug he was already familiar with and mixing it with alcohol.	60	60	\N	t	\N	2026-07-20 14:01:32.762365+00
+11	13	Murder 	A third party was interested in the insurance payment and the property that belonged to Mr Mercer. Hence the third party murdered Mr Mercer and staged it as suicide. 	40	40	\N	t	\N	2026-07-20 14:03:04.0675+00
+12	14	Unknown heavy-built individual 	The unknown heavy-built individual spiked the victims drink at the pub and kidnapped her. 	90	90	\N	t	\N	2026-07-20 14:43:21.68831+00
+13	14	Ex-boyfriend	The victim's ex-boyfriend was involved in her disappearence. 	10	10	\N	t	\N	2026-07-20 14:43:53.512507+00
+14	15	Mara was drugged and kidnapped by someone she knew, that is not her ex. 	Mara withdrew money on the 7th March and then went to a pub to meet with someone. She must have known this person, as they could've shared a cup, as well as he bought a drink for her and they were seen talking to each other. He must have drugged the new drinks he bought before handing it over for her to drink. After she was drugged, she was taken in his car heading towards heathrow airport. 	90	90	\N	t	\N	2026-07-23 19:32:24.405805+00
+15	15	Mara wanted to escape her ex and head to Georgia without going back. 	A few days prior to her disappearance, she had bought a one way ticket to Georgia, demonstrating unclear intentions if she would be back. Additionally, her ex has history of harassing her and imitating contact when she has clearly stated she doesn't want to be in contact with him anymore. Perhaps she plotted an elaborate plan to escape with the help of K so that her ex will leave her alone. This is also why she took out cash, initially perhaps wanting to pay him for whatever service he was offering. 	40	40	\N	t	\N	2026-07-23 19:39:04.996384+00
+16	15	Mara's ex is behind the disappearance. 	Mara's ex hired someone that they both knew to drug and kidnap Mara. After Mara said she didn't want contact anymore, her ex threatented her saying she'll regret it. After all it sounded like he was abusive and obsessed with her. Perhaps she didn't want proof of her going abroad was so that her ex wouldn't suspect anything. 	60	60	\N	t	\N	2026-07-23 19:41:01.483313+00
+19	18	Voluntary abduction	Mara told Priya she was "going to meet someone" and would "explain everything soon", the language here is suggesting a plan she was aware of.\nThen the notebook note "K says it will be clean" could mean K assured her the documentation/exit would be untraceable. That makes it quite consistent with someone who is deliberately trying to vanish maybe escaping Jayden's stalking, a debt, or another undisclosed pressure, with help.\nLeaving passport and laptop could be intentional, maybe she didn't bring old documents because new ones would be provided. \nHowever, this reading is undercut by the GHB finding ,a person orchestrating her own calm disappearance would not typically be drugged by her own facilitator right before leaving. This suggests that even if the plan started as voluntary, it was betrayed by the man she met  turning a self-directed disappearance into a crime.	71	71	\N	t	\N	2026-07-26 06:19:05.37947+00
+20	18	Trafficking or abduction	Mara arranged a meeting with unknown contact K for Friday, it matches her exact movements that night.\nThe Atlas Travel booking is suspicious, one-way, telephone-only, no passport number given, paid in cash. These are all indicative of someone being told what to book rather than booking a simple, normal personal trip.\nThe GHB in the glass confirms she (or whoever was drinking from it) was drugged by the man who joined her, this is not consistent with a self-directed departure.\nHer passport was left behind, meaning she could not have boarded that flight. This suggests the flight booking was made because K never intended her to actually travel through normal channels, so she may have been moved by other means, most likely private means, after being drugged.\nThe phone's pattern toward Heathrow may be the phone being carried by the abductor to simulate her route, which is likely not evidence of her actual movement.	83	83	\N	t	\N	2026-07-26 06:25:09.894556+00
+\.
+
+
+--
+-- Data for Name: hypothesis_revisions; Type: TABLE DATA; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+COPY public.hypothesis_revisions (id, hypothesis_id, previous_confidence, new_confidence, rationale, created_at) FROM stdin;
+1	4	50	70	\N	2026-07-13 19:11:25.022411+00
+2	4	70	62	\N	2026-07-13 19:12:54.84748+00
+\.
+
+
+--
+-- Data for Name: observations; Type: TABLE DATA; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+COPY public.observations (id, session_id, observation_text, source, observed_timestamp, created_at) FROM stdin;
+1	1	Nothing seems suspicious at this point	On the basis of the summary	\N	2026-06-28 20:57:28.826341+00
+2	3	Victim found face-down on the living room floor near the sofa fully clothed in casual home attire. His left arm is extended outward and his right arm is tucked beneath his torso. No visible trauma to the head or neck from this angle. 	scene photography	\N	2026-07-13 18:46:26.75645+00
+3	3	A prescription bottle of diazepam (10mg tablets, 30-count) was found on the kitchen counter. There are only 24 remaining in the bottle	direct visual inspection 	\N	2026-07-13 19:03:55.159335+00
+4	3	Two unlabeled foil blister packs were found inside a coat pocket hanging near the front door. Each pack contains 10 round white tablets. 	direct visual inspection	\N	2026-07-13 19:04:15.676506+00
+5	3	A folded handwritten note was found under the deceased's mobile phone on the coffee table. It reads: 'I've sorted the flat. The keys are with Mrs. Patel next door. Don't let Mum find out this way.' 	direct visual inspection	\N	2026-07-13 19:04:48.727343+00
+6	3	A 70cl bottle of whisky (brand: Glenfiddich 12-year) was found on the coffee table, approximately one-third remaining. 	direct visual inspection	\N	2026-07-13 19:06:20.581445+00
+7	4	no signs of forced entry	Case overview	\N	2026-07-14 12:21:18.601349+00
+8	4	no physical trauma or defensive wounds	evidence item 1 and 12	\N	2026-07-14 12:23:31.262312+00
+9	4	victim suffered from anxiety which he was being medicated for	item 3 and 7	\N	2026-07-14 12:24:10.693242+00
+10	4	victim was in possesion of unprescribed medication	item 4	\N	2026-07-14 12:24:57.568804+00
+11	4	victim has knowledge of lethal doses of the medication prescribed to him	item 11	\N	2026-07-14 12:27:58.923033+00
+12	4	victim had consumed alcohol in the hours leading up to his death	item 10	\N	2026-07-14 12:28:36.654083+00
+13	6	A dark red stain	visual photo	\N	2026-07-19 06:57:08.203263+00
+14	13	My initial observation is that there were no signs of forced entry and the door was open. There are also no notes of prior disturbance - e.g. noise coming from Mr Mercer's flat - prior to Mrs Patel's visit. 	case description 	\N	2026-07-20 13:53:51.28509+00
+15	14	Mara has been missing for over a day. She might have her mobile phone with her, but no other identification.  	Case description	\N	2026-07-20 14:28:00.618664+00
+16	15	Mara Voss leaving her flat alone at 22:04pm. 	Item 1: CCTV evidence 	2025-03-07 22:04:00+00	2026-07-23 14:38:01.932561+00
+17	15	Calls to a withheld number the day of disappearance. 	Item 3: Phone Records 	2025-03-07 22:03:00+00	2026-07-23 14:39:46.025304+00
+18	15	Consistent unwanted contact from ex. 	Item 6: DASH risk assessment 	\N	2026-07-23 19:17:08.661719+00
+19	15	Mara appears to have drank alcohol from a cup that was spiked with GHB	Item 10: toxicology report 	2025-03-07 23:18:00+00	2026-07-23 19:18:45.98342+00
+20	15	Mara leaving the pub and last seen with an unknown person	Item 8: CCTV outside pub	2025-03-07 22:38:00+00	2026-07-23 19:20:02.027728+00
+21	15	Tall man, with heavy build, mid 30s-40s last seen with Mara	Item 9: Witness statement from bar staff	2025-03-07 22:10:00+00	2026-07-23 19:21:30.944909+00
+22	15	Mara's phone movement is consistent with travelling towards Heathrow Airport. 	Item 14: CSA	2026-07-23 22:11:00+00	2026-07-23 19:23:29.846171+00
+23	15	Witness has seen people consistent with Mara and the unknown person leaving in a car heading westbound. 	Item 15: vehicle sighting 	2025-03-07 22:46:00+00	2026-07-23 19:25:16.957214+00
+24	15	£120 withdrawn from Mara's bank account in person. 	Item 11 - financial intelligence report 	2025-03-07 22:19:00+00	2026-07-23 19:26:34.166608+00
+25	15	Passport remains in Mara's room. 	Item 10: scene examination report 	2025-03-10 20:27:00+00	2026-07-23 19:28:11.733778+00
+27	17	Mara reported missing approximately 2 days after she last left her flat.	case info	\N	2026-07-24 21:47:19.496476+00
+28	17	Contact with her mobile device ceased 47 minutes after Mara left her flat.	case info	2025-03-07 22:47:00+00	2026-07-24 21:49:00.261955+00
+29	17	Mara was seen leaving the flat on the 7th March at approximately 22:00	case info	2025-03-07 22:00:00+00	2026-07-24 21:49:41.878399+00
+30	17	Mara did not take personal belongings (passport + laptop) when leaving	case info	\N	2026-07-24 21:50:22.258507+00
+31	18	No passport taken, suggests no international voluntary travel	Mentioned in the case report	\N	2026-07-26 05:57:04.418283+00
+32	19	hjkjhjkhj	desciption of case	2025-03-07 17:31:00+00	2026-07-26 13:57:18.279896+00
+\.
+
+
+--
+-- Data for Name: reconstruction_sessions; Type: TABLE DATA; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+COPY public.reconstruction_sessions (id, participant_id, case_id, current_stage, started_at, completed_at, first_preferred_hypothesis_at, bayesian_enabled_snapshot) FROM stdin;
+1	3	1	4	2026-06-28 20:56:17.51505+00	\N	\N	t
+2	4	1	1	2026-06-30 12:54:18.083429+00	\N	\N	t
+3	5	1	4	2026-07-13 15:34:03.234233+00	\N	2026-07-13 19:12:58.658404+00	t
+4	7	1	7	2026-07-14 12:04:25.274014+00	2026-07-14 13:14:16.667971+00	2026-07-14 12:51:55.88396+00	t
+5	2	2	1	2026-07-19 02:38:51.234547+00	\N	\N	t
+6	3	2	4	2026-07-19 06:56:29.762934+00	\N	2026-07-19 06:57:55.7269+00	t
+7	3	2	1	2026-07-19 07:55:06.114754+00	\N	\N	t
+8	3	2	1	2026-07-19 12:27:48.775553+00	\N	\N	t
+9	3	2	1	2026-07-19 23:32:59.510877+00	\N	\N	t
+10	3	2	1	2026-07-19 23:54:52.729035+00	\N	\N	t
+11	3	1	1	2026-07-20 10:22:19.364212+00	\N	\N	t
+12	3	2	1	2026-07-20 10:48:55.424843+00	\N	\N	t
+13	8	1	7	2026-07-20 13:50:55.277506+00	2026-07-20 14:19:07.143568+00	2026-07-20 14:03:04.085179+00	t
+14	8	2	7	2026-07-20 14:26:07.784812+00	2026-07-20 14:55:20.879398+00	2026-07-20 14:43:53.557339+00	t
+15	9	2	7	2026-07-23 14:32:52.457797+00	2026-07-23 19:56:33.717303+00	2026-07-23 19:39:05.009949+00	t
+16	10	2	1	2026-07-24 15:41:24.34514+00	\N	\N	t
+17	11	2	7	2026-07-24 21:44:35.270828+00	2026-07-24 22:20:13.519277+00	\N	t
+18	12	2	7	2026-07-26 05:55:25.170898+00	2026-07-26 06:40:41.937169+00	2026-07-26 06:25:09.909948+00	t
+19	2	2	3	2026-07-26 13:45:07.771847+00	\N	\N	t
+20	13	2	1	2026-07-26 19:37:50.074084+00	\N	\N	t
+\.
+
+
+--
+-- Data for Name: session_metrics; Type: TABLE DATA; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+COPY public.session_metrics (id, session_id, num_hypotheses_generated, num_hypothesis_revisions, num_evidence_hypothesis_links, num_alternatives_retained_at_final, num_contradictory_acknowledgements, hypothesis_flexibility_score, time_to_first_preferred_hypothesis_seconds, num_hypotheses_abandoned_early, num_contradictory_evidence_ignored, num_evidence_reviewed_before_final, premature_closure_score, initial_confidence_of_selected, final_confidence, final_accuracy, calibration_error, computed_at) FROM stdin;
+2	2	0	0	0	0	0	0	\N	0	0	0	20	\N	\N	\N	\N	2026-07-14 09:27:05.624089+00
+4	1	2	0	0	2	0	24.67	\N	0	0	0	20	\N	\N	\N	\N	2026-07-18 20:00:25.619332+00
+5	5	0	0	0	0	0	0	\N	0	0	0	20	\N	\N	\N	\N	2026-07-19 07:03:48.817126+00
+6	6	0	0	0	0	0	0	85.963966	0	0	0	40	\N	\N	\N	\N	2026-07-19 07:03:48.884751+00
+7	13	2	0	26	2	1	59.67	728.807673	0	0	13	12.75	60	65	\N	\N	2026-07-20 14:19:07.236827+00
+8	14	2	0	30	2	0	44.67	1065.772527	0	0	15	8.74	90	99	\N	\N	2026-07-20 14:55:20.906548+00
+9	15	3	0	45	3	0	57	18372.552152	0	0	15	0	90	90	\N	\N	2026-07-23 19:56:33.738523+00
+10	17	2	0	30	2	0	44.67	\N	0	0	15	0	50	75	\N	\N	2026-07-24 22:20:13.540145+00
+11	18	2	0	30	2	3	59.67	1784.73905	0	0	15	0.18	83	86	\N	\N	2026-07-26 06:40:41.950405+00
+12	20	0	0	0	0	0	0	\N	0	0	0	20	\N	\N	\N	\N	2026-07-27 12:06:28.615386+00
+1	3	2	2	12	2	0	40.56	13135.424171	0	0	6	10.77	\N	\N	\N	\N	2026-07-27 12:07:00.657559+00
+3	4	2	0	24	2	3	58.13	2850.609946	0	0	12	1.54	90	80	\N	\N	2026-07-27 12:07:00.674627+00
+13	7	0	0	0	0	0	0	\N	0	0	0	20	\N	\N	\N	\N	2026-07-27 12:07:00.863495+00
+14	8	0	0	0	0	0	0	\N	0	0	0	20	\N	\N	\N	\N	2026-07-27 12:07:00.879921+00
+15	9	0	0	0	0	0	0	\N	0	0	0	20	\N	\N	\N	\N	2026-07-27 12:07:00.963849+00
+16	10	0	0	0	0	0	0	\N	0	0	0	20	\N	\N	\N	\N	2026-07-27 12:07:01.051397+00
+17	11	0	0	0	0	0	0	\N	0	0	0	20	\N	\N	\N	\N	2026-07-27 12:07:01.06618+00
+18	12	0	0	0	0	0	0	\N	0	0	0	20	\N	\N	\N	\N	2026-07-27 12:07:01.080702+00
+19	16	0	0	0	0	0	0	\N	0	0	0	20	\N	\N	\N	\N	2026-07-27 12:07:01.271958+00
+20	19	0	0	0	0	0	0	\N	0	0	0	20	\N	\N	\N	\N	2026-07-27 12:07:01.474899+00
+\.
+
+
+--
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+COPY public.users (id, username, email, hashed_password, role, is_active, has_consented, created_at) FROM stdin;
+1	researcher1	\N	$2b$12$z4TJoM7yg/VG2bcPyYJ7.uYUPmofUB0liIAjRytf6QVDdRKVqeeae	researcher	t	f	2026-06-28 20:17:57.07817+00
+3	participant2	\N	$2b$12$bnb2QvvXGSvbdsOVCwjEbuytFOevNifL4vCoMlVUuouhcP/Z7XyAu	participant	t	t	2026-06-28 20:37:28.782141+00
+4	participant3	\N	$2b$12$xq8aJ03NPpRoqR4h6pUY1.8sNfMC1i4IoOd.iM6xWeXsvqMYrUY22	participant	t	t	2026-06-30 12:52:22.133993+00
+5	mtmiin	\N	$2b$12$zDCOV3TQApidrdM87MyJKObFGn9BAWtKV9QpqrwB2jcRK1qN4cTq.	participant	t	t	2026-07-12 14:25:09.173256+00
+6	LD070903	\N	$2b$12$qDrM1Z2INhNO7pyW6ujVouw/5kX5Xac/Ufw08hvpvel.J4sP47C1.	participant	t	f	2026-07-14 11:52:24.823671+00
+7	LSD070903	\N	$2b$12$rCLln7fZdzxsWHsObrzJ4O47Y8Ux3f6FaMo6LBY/JvQ.dSqSkI04S	participant	t	t	2026-07-14 11:55:19.909414+00
+2	participant1	\N	$2b$12$u0R.DqWrK0W9WpNd39nnXeA7gWiMyvrkBx0yUPkbXM6cc9CiuxzFe	participant	t	t	2026-06-28 20:18:44.283204+00
+8	ZAZA22	\N	$2b$12$p.0oNOiV7gg9G0FBZYeAOOXzRRbSgEULC5FnEc3.Rq0eQSX1dhpM6	participant	t	t	2026-07-20 13:49:23.245162+00
+9	bread2026	\N	$2b$12$xut.lQpuqm/xAX6bZG8IzOGwJ8zphz/5XN/vIvAjjRCSaixghu10y	participant	t	t	2026-07-23 14:31:47.290365+00
+10	CSI2004	\N	$2b$12$cQJdOaZqgtEvtWksNFyLMePS65qZgrmHq3G.7F4rfF2.iaQC0RzgG	participant	t	t	2026-07-24 15:39:33.953409+00
+11	bilbobaggins	\N	$2b$12$OClatfy/3.yTCEPGY9bqIejzyQaCk673ua2GPVYuMHigkhdGtRnJC	participant	t	t	2026-07-24 21:43:25.543025+00
+12	GV2006	\N	$2b$12$mV2FFmiNJBkA3awSimYZUuuFE3fzueVxt6xpczSeRtdswdRibUZxm	participant	t	t	2026-07-26 05:54:31.621026+00
+13	CSI2010	\N	$2b$12$dDGoPzcJftpMfS2V2FS1MeV/pp2FFAOcVnZKlXvKqouU4W/y12YaC	participant	t	t	2026-07-26 19:36:07.297876+00
+\.
+
+
+--
+-- Name: activity_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+SELECT pg_catalog.setval('public.activity_logs_id_seq', 392, true);
+
+
+--
+-- Name: alternative_acknowledgements_id_seq; Type: SEQUENCE SET; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+SELECT pg_catalog.setval('public.alternative_acknowledgements_id_seq', 14, true);
+
+
+--
+-- Name: bayesian_updates_id_seq; Type: SEQUENCE SET; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+SELECT pg_catalog.setval('public.bayesian_updates_id_seq', 1, false);
+
+
+--
+-- Name: cases_id_seq; Type: SEQUENCE SET; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+SELECT pg_catalog.setval('public.cases_id_seq', 2, true);
+
+
+--
+-- Name: evidence_hypothesis_links_id_seq; Type: SEQUENCE SET; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+SELECT pg_catalog.setval('public.evidence_hypothesis_links_id_seq', 197, true);
+
+
+--
+-- Name: evidence_items_id_seq; Type: SEQUENCE SET; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+SELECT pg_catalog.setval('public.evidence_items_id_seq', 44, true);
+
+
+--
+-- Name: final_reconstructions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+SELECT pg_catalog.setval('public.final_reconstructions_id_seq', 6, true);
+
+
+--
+-- Name: hypotheses_id_seq; Type: SEQUENCE SET; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+SELECT pg_catalog.setval('public.hypotheses_id_seq', 20, true);
+
+
+--
+-- Name: hypothesis_revisions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+SELECT pg_catalog.setval('public.hypothesis_revisions_id_seq', 2, true);
+
+
+--
+-- Name: observations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+SELECT pg_catalog.setval('public.observations_id_seq', 32, true);
+
+
+--
+-- Name: reconstruction_sessions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+SELECT pg_catalog.setval('public.reconstruction_sessions_id_seq', 20, true);
+
+
+--
+-- Name: session_metrics_id_seq; Type: SEQUENCE SET; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+SELECT pg_catalog.setval('public.session_metrics_id_seq', 20, true);
+
+
+--
+-- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+SELECT pg_catalog.setval('public.users_id_seq', 13, true);
+
+
+--
+-- Name: activity_logs activity_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.activity_logs
+    ADD CONSTRAINT activity_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: alternative_acknowledgements alternative_acknowledgements_pkey; Type: CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.alternative_acknowledgements
+    ADD CONSTRAINT alternative_acknowledgements_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: bayesian_updates bayesian_updates_pkey; Type: CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.bayesian_updates
+    ADD CONSTRAINT bayesian_updates_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: cases cases_pkey; Type: CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.cases
+    ADD CONSTRAINT cases_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: evidence_hypothesis_links evidence_hypothesis_links_pkey; Type: CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.evidence_hypothesis_links
+    ADD CONSTRAINT evidence_hypothesis_links_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: evidence_items evidence_items_pkey; Type: CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.evidence_items
+    ADD CONSTRAINT evidence_items_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: final_reconstructions final_reconstructions_pkey; Type: CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.final_reconstructions
+    ADD CONSTRAINT final_reconstructions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: final_reconstructions final_reconstructions_session_id_key; Type: CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.final_reconstructions
+    ADD CONSTRAINT final_reconstructions_session_id_key UNIQUE (session_id);
+
+
+--
+-- Name: hypotheses hypotheses_pkey; Type: CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.hypotheses
+    ADD CONSTRAINT hypotheses_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: hypothesis_revisions hypothesis_revisions_pkey; Type: CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.hypothesis_revisions
+    ADD CONSTRAINT hypothesis_revisions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: observations observations_pkey; Type: CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.observations
+    ADD CONSTRAINT observations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: reconstruction_sessions reconstruction_sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.reconstruction_sessions
+    ADD CONSTRAINT reconstruction_sessions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: session_metrics session_metrics_pkey; Type: CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.session_metrics
+    ADD CONSTRAINT session_metrics_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: session_metrics session_metrics_session_id_key; Type: CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.session_metrics
+    ADD CONSTRAINT session_metrics_session_id_key UNIQUE (session_id);
+
+
+--
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: ix_activity_logs_created_at; Type: INDEX; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE INDEX ix_activity_logs_created_at ON public.activity_logs USING btree (created_at);
+
+
+--
+-- Name: ix_activity_logs_event_type; Type: INDEX; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE INDEX ix_activity_logs_event_type ON public.activity_logs USING btree (event_type);
+
+
+--
+-- Name: ix_activity_logs_id; Type: INDEX; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE INDEX ix_activity_logs_id ON public.activity_logs USING btree (id);
+
+
+--
+-- Name: ix_alternative_acknowledgements_id; Type: INDEX; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE INDEX ix_alternative_acknowledgements_id ON public.alternative_acknowledgements USING btree (id);
+
+
+--
+-- Name: ix_bayesian_updates_id; Type: INDEX; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE INDEX ix_bayesian_updates_id ON public.bayesian_updates USING btree (id);
+
+
+--
+-- Name: ix_cases_id; Type: INDEX; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE INDEX ix_cases_id ON public.cases USING btree (id);
+
+
+--
+-- Name: ix_evidence_hypothesis_links_id; Type: INDEX; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE INDEX ix_evidence_hypothesis_links_id ON public.evidence_hypothesis_links USING btree (id);
+
+
+--
+-- Name: ix_evidence_items_id; Type: INDEX; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE INDEX ix_evidence_items_id ON public.evidence_items USING btree (id);
+
+
+--
+-- Name: ix_final_reconstructions_id; Type: INDEX; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE INDEX ix_final_reconstructions_id ON public.final_reconstructions USING btree (id);
+
+
+--
+-- Name: ix_hypotheses_id; Type: INDEX; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE INDEX ix_hypotheses_id ON public.hypotheses USING btree (id);
+
+
+--
+-- Name: ix_hypothesis_revisions_id; Type: INDEX; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE INDEX ix_hypothesis_revisions_id ON public.hypothesis_revisions USING btree (id);
+
+
+--
+-- Name: ix_observations_id; Type: INDEX; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE INDEX ix_observations_id ON public.observations USING btree (id);
+
+
+--
+-- Name: ix_reconstruction_sessions_id; Type: INDEX; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE INDEX ix_reconstruction_sessions_id ON public.reconstruction_sessions USING btree (id);
+
+
+--
+-- Name: ix_session_metrics_id; Type: INDEX; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE INDEX ix_session_metrics_id ON public.session_metrics USING btree (id);
+
+
+--
+-- Name: ix_users_email; Type: INDEX; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE UNIQUE INDEX ix_users_email ON public.users USING btree (email);
+
+
+--
+-- Name: ix_users_id; Type: INDEX; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE INDEX ix_users_id ON public.users USING btree (id);
+
+
+--
+-- Name: ix_users_username; Type: INDEX; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+CREATE UNIQUE INDEX ix_users_username ON public.users USING btree (username);
+
+
+--
+-- Name: activity_logs activity_logs_session_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.activity_logs
+    ADD CONSTRAINT activity_logs_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.reconstruction_sessions(id);
+
+
+--
+-- Name: alternative_acknowledgements alternative_acknowledgements_evidence_item_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.alternative_acknowledgements
+    ADD CONSTRAINT alternative_acknowledgements_evidence_item_id_fkey FOREIGN KEY (evidence_item_id) REFERENCES public.evidence_items(id);
+
+
+--
+-- Name: alternative_acknowledgements alternative_acknowledgements_hypothesis_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.alternative_acknowledgements
+    ADD CONSTRAINT alternative_acknowledgements_hypothesis_id_fkey FOREIGN KEY (hypothesis_id) REFERENCES public.hypotheses(id);
+
+
+--
+-- Name: alternative_acknowledgements alternative_acknowledgements_session_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.alternative_acknowledgements
+    ADD CONSTRAINT alternative_acknowledgements_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.reconstruction_sessions(id);
+
+
+--
+-- Name: bayesian_updates bayesian_updates_hypothesis_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.bayesian_updates
+    ADD CONSTRAINT bayesian_updates_hypothesis_id_fkey FOREIGN KEY (hypothesis_id) REFERENCES public.hypotheses(id);
+
+
+--
+-- Name: cases cases_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.cases
+    ADD CONSTRAINT cases_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id);
+
+
+--
+-- Name: evidence_hypothesis_links evidence_hypothesis_links_evidence_item_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.evidence_hypothesis_links
+    ADD CONSTRAINT evidence_hypothesis_links_evidence_item_id_fkey FOREIGN KEY (evidence_item_id) REFERENCES public.evidence_items(id);
+
+
+--
+-- Name: evidence_hypothesis_links evidence_hypothesis_links_hypothesis_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.evidence_hypothesis_links
+    ADD CONSTRAINT evidence_hypothesis_links_hypothesis_id_fkey FOREIGN KEY (hypothesis_id) REFERENCES public.hypotheses(id);
+
+
+--
+-- Name: evidence_hypothesis_links evidence_hypothesis_links_session_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.evidence_hypothesis_links
+    ADD CONSTRAINT evidence_hypothesis_links_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.reconstruction_sessions(id);
+
+
+--
+-- Name: evidence_items evidence_items_case_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.evidence_items
+    ADD CONSTRAINT evidence_items_case_id_fkey FOREIGN KEY (case_id) REFERENCES public.cases(id);
+
+
+--
+-- Name: final_reconstructions final_reconstructions_scored_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.final_reconstructions
+    ADD CONSTRAINT final_reconstructions_scored_by_fkey FOREIGN KEY (scored_by) REFERENCES public.users(id);
+
+
+--
+-- Name: final_reconstructions final_reconstructions_selected_hypothesis_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.final_reconstructions
+    ADD CONSTRAINT final_reconstructions_selected_hypothesis_id_fkey FOREIGN KEY (selected_hypothesis_id) REFERENCES public.hypotheses(id);
+
+
+--
+-- Name: final_reconstructions final_reconstructions_session_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.final_reconstructions
+    ADD CONSTRAINT final_reconstructions_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.reconstruction_sessions(id);
+
+
+--
+-- Name: hypotheses hypotheses_session_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.hypotheses
+    ADD CONSTRAINT hypotheses_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.reconstruction_sessions(id);
+
+
+--
+-- Name: hypothesis_revisions hypothesis_revisions_hypothesis_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.hypothesis_revisions
+    ADD CONSTRAINT hypothesis_revisions_hypothesis_id_fkey FOREIGN KEY (hypothesis_id) REFERENCES public.hypotheses(id);
+
+
+--
+-- Name: observations observations_session_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.observations
+    ADD CONSTRAINT observations_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.reconstruction_sessions(id);
+
+
+--
+-- Name: reconstruction_sessions reconstruction_sessions_case_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.reconstruction_sessions
+    ADD CONSTRAINT reconstruction_sessions_case_id_fkey FOREIGN KEY (case_id) REFERENCES public.cases(id);
+
+
+--
+-- Name: reconstruction_sessions reconstruction_sessions_participant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.reconstruction_sessions
+    ADD CONSTRAINT reconstruction_sessions_participant_id_fkey FOREIGN KEY (participant_id) REFERENCES public.users(id);
+
+
+--
+-- Name: session_metrics session_metrics_session_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: forensic_recon_db_tobo_user
+--
+
+ALTER TABLE ONLY public.session_metrics
+    ADD CONSTRAINT session_metrics_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.reconstruction_sessions(id);
+
+
+--
+-- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: -; Owner: postgres
+--
+
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres GRANT ALL ON SEQUENCES TO forensic_recon_db_tobo_user;
+
+
+--
+-- Name: DEFAULT PRIVILEGES FOR TYPES; Type: DEFAULT ACL; Schema: -; Owner: postgres
+--
+
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres GRANT ALL ON TYPES TO forensic_recon_db_tobo_user;
+
+
+--
+-- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: -; Owner: postgres
+--
+
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres GRANT ALL ON FUNCTIONS TO forensic_recon_db_tobo_user;
+
+
+--
+-- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: -; Owner: postgres
+--
+
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres GRANT ALL ON TABLES TO forensic_recon_db_tobo_user;
+
+
+COMMIT;
+
+--
+-- PostgreSQL database dump complete
+--
+
+\unrestrict vc0TpUPTqBkMeYU0aSzLg1Urc5PhYPdKCxhjUCW0nKPBQc8LiLkSRWV9tVjRcO1
+

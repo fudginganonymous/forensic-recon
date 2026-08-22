@@ -19,6 +19,8 @@ from app.core.deps import get_current_user, require_researcher
 from app.core.config import settings
 from app.models.user import User
 from app.models.case import Case, EvidenceItem
+from app.models.case import Case, EvidenceItem
+from app.models.evidence_link import EvidenceHypothesisLink
 from app.schemas.case import (
     CaseCreate, CaseUpdate, CaseOut, CaseDetailOut, CaseParticipantOut,
     EvidenceItemCreate, EvidenceItemOut,
@@ -161,11 +163,36 @@ def edit_evidence_item(
 
 
 @router.delete("/{case_id}/evidence/{evidence_id}", status_code=204)
-def delete_evidence_item(case_id: int, evidence_id: int, researcher: User = Depends(require_researcher), db: Session = Depends(get_db)):
-    item = db.query(EvidenceItem).filter(EvidenceItem.id ==
-                                         evidence_id, EvidenceItem.case_id == case_id).first()
+def delete_evidence_item(
+    case_id: int,
+    evidence_id: int,
+    force: bool = False,
+    researcher: User = Depends(require_researcher),
+    db: Session = Depends(get_db),
+):
+    item = db.query(EvidenceItem).filter(
+        EvidenceItem.id == evidence_id, EvidenceItem.case_id == case_id
+    ).first()
     if not item:
         raise HTTPException(status_code=404, detail="Evidence item not found")
+
+    linked_count = db.query(EvidenceHypothesisLink).filter(
+        EvidenceHypothesisLink.evidence_item_id == evidence_id
+    ).count()
+
+    if linked_count > 0 and not force:
+        raise HTTPException(
+            status_code=409,
+            detail=f"This evidence item has {linked_count} participant response(s) linked to it. "
+                   f"Deleting it will permanently remove those responses too. "
+                   f"Resend the request with ?force=true to confirm.",
+        )
+
+    if linked_count > 0:
+        db.query(EvidenceHypothesisLink).filter(
+            EvidenceHypothesisLink.evidence_item_id == evidence_id
+        ).delete()
+
     db.delete(item)
     db.commit()
     return None
