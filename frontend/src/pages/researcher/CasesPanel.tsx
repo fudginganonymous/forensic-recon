@@ -263,16 +263,27 @@ function EvidenceManager({
     }
   }
 
-  async function handleDelete(evidenceId: number) {
+    async function handleDelete(evidenceId: number, force = false) {
     setError(null);
     try {
-      await api.delete(`/cases/${caseDetail.id}/evidence/${evidenceId}`);
+      await api.delete(
+        `/cases/${caseDetail.id}/evidence/${evidenceId}${force ? "?force=true" : ""}`
+      );
       onChanged();
     } catch (err) {
+      const status = (err as any)?.response?.status;
+      if (status === 409 && !force) {
+        const detail = extractErrorMessage(err);
+        const confirmed = window.confirm(`${detail}\n\nDelete anyway?`);
+        if (confirmed) {
+          await handleDelete(evidenceId, true);
+        }
+        return;
+      }
       setError(extractErrorMessage(err));
     }
   }
-
+  
   return (
     <div className="mt-4 border-t border-slate-100 pt-4">
       <ErrorMessage message={error} />
