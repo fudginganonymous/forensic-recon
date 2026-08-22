@@ -271,6 +271,7 @@ function EvidenceManager({
       );
       onChanged();
     } catch (err) {
+      console.log("DELETE ERROR:", err);
       const status = (err as any)?.response?.status;
       if (status === 409 && !force) {
         const detail = extractErrorMessage(err);
