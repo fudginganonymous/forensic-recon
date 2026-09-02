@@ -5,7 +5,9 @@ backend/**/__pycache__/
 backend/*.db
 backend/uploads/
 backend/.env
-backend/config.py
+backend/app/core/config.py
+backend/app/core/config_backup.py
+backend/app/core/config_private.py
 
 # Database Backups
 *.dump
