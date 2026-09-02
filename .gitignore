@@ -5,6 +5,13 @@ backend/**/__pycache__/
 backend/*.db
 backend/uploads/
 backend/.env
+backend/config.py
+
+# Database Backups
+*.dump
+*.sql
+*.sqlite
+*.sqlite3
 
 # Node
 frontend/node_modules/
